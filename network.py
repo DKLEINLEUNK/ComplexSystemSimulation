@@ -117,12 +117,14 @@ class Network:
 
         # Calculate change in EPS here, dependent on A
         delta_eps = self.eps * LOSS_IF_INFECTED * select_values(failed_nodes)
+        init_eps = self.eps.copy()
         self.eps -= delta_eps
 
         # For 90 days
         for i in range(90):
-            delta_eps = delta_eps @ A
+            delta_eps = delta_eps @ 
             self.eps = self.eps - delta_eps
+            print((init_eps - self.eps) / init_eps < 1 - LIMIT_FAIL)
             print(f"i: {i}, EPS: {self.eps}")
 
     def set_statuses(self, nodes, statuses):
