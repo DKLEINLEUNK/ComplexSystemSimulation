@@ -7,7 +7,18 @@ Running this module as a script will generate an example network.
 
 import networkx as nx
 import numpy as np
+from economy_functions import ownership_matrix
 
+
+LIMIT_FAIL = 0.3  # Company fails if 30% of its EPS drops
+LOSS_IF_INFECTED = 0.85
+
+
+def select_values(nodes, size):
+    select = np.zeros(size)
+    for n in nodes:
+        select[n] = 1
+    return select
 
 LIMIT_FAIL = 0.3  # Company fails if 30% of its EPS drops
 LOSS_IF_INFECTED = 0.85
@@ -47,30 +58,37 @@ class Network:
         Initializes a network with `n` nodes.
         Either `m` edges or `p` probability of an edge should be provided.
 
-        Parameters
-        ----------
-        `n` : int
-        Number of nodes
-        `m` : int
-        Number of edges
-        `p` : float
-        Probability of an edge
-        `lambda`: float
-        Determines EPS of companies
-        """
-        if m is not None:
-            self.graph = nx.gnm_random_graph(n, m)
-        elif p is not None:
-            self.graph = nx.erdos_renyi_graph(n, p)
-        ### OUR MODEL MODEL
-        else:
-            raise ValueError("Either m or p must be provided.")
-
+		Parameters
+		----------
+		`n` : int
+		Number of nodes
+		`m` : int
+		Number of edges
+		`p` : float
+		Probability of an edge
+		'''
+		if m is not None:
+			self.graph = nx.gnm_random_graph(n, m, directed = True)
+		elif p is not None:
+			self.graph = nx.erdos_renyi_graph(n, p, directed = True)
+	
+		else:
+			raise ValueError("Either m or p must be provided.")
+               
         _lambda = _lambda or 1.5
         self.eps = np.random.exponential(_lambda, n)
+	
+	def set_ownerships(self):
+		"""
+		Sets all edges weights
+		"""
+		A = ownership_matrix(graph.number_of_nodes(), graph.edges())
+		for u, v in G.edges():
+			graph[u][v]['ownership'] = A[u,v]
+
 
     def set_status(self, node, status):
-        ### SET AT 0 and 1 status, and add counter EPS
+        ### SET AT 0 and 1 status, and add counter EPS. MEYBE WE CLEANING CODE SET IT AS CHILD CLASS
         if status in [0, 1, 2]:
             nx.set_node_attributes(self.graph, {node: status}, "status")
         else:
@@ -162,7 +180,7 @@ class Network:
         return neighbors
 
 
-##### We could use two statuse, EPS and Fail or not. Sewnd array with Statuses, adn recive array. I will send you matrix A.
+##### We could use two status, EPS and Fail or not. Send array with Statuses, and recive array. I will send you matrix A.
 
 if __name__ == "__main__":
     ### EXAMPLE USAGE ###
