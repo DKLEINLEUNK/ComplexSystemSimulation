@@ -14,6 +14,7 @@ Running this module as a script run an example.
 '''
 
 import json
+import time
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -79,6 +80,7 @@ class Inoculation:
         self.verbose = verbose
         self.visualize = visualize
         self.export_dir = export_dir
+        self.exporting = False
 
         # Initialize the export directory
         if export_dir is not None:
@@ -324,20 +326,31 @@ def complex_contagion():
 
 if __name__ == "__main__":
 
+    start = time.time()
+
     ### EXAMPLE USAGE ###
+    n_steps = 10
+    n_nodes = 100_000
+    n_edges = 300_000
+
     simulation = Inoculation(
-        n_steps=1000, 
+        n_steps=n_steps, 
         n_trials=1, 
-        n_nodes=10_000,  # N^5
-        n_edges=30_000, 
+        n_nodes=n_nodes,
+        n_edges=n_edges, 
         pr_edge=False,
         epsilon=0.001, 
         verbose=False, 
         visualize=False,
-        export_dir='exports/'
+        export_dir=None
     )
 
     # # Visualize the network at t = 0
     # simulation._visualize_network()
     
     simulation.run()
+
+    execution_time = time.time() - start
+
+    with open('execution_times.txt', 'a') as file:
+        file.write( f'{n_nodes}, {n_edges}, {execution_time / n_steps}\n' )
