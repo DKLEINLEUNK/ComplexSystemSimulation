@@ -49,11 +49,13 @@ class Network:
 			self.graph = nx.gnm_random_graph(n, m)
 		elif p is not None:
 			self.graph = nx.erdos_renyi_graph(n, p)
+		### OUR MODEL MODEL
 		else:
 			raise ValueError("Either m or p must be provided.")
 		
 
 	def set_status(self, node, status):
+		### SET AT 0 and 1 status, and add counter EPS
 		if status in [0, 1, 2]:
 			nx.set_node_attributes(self.graph, {node: status}, 'status')
 		else:
@@ -114,7 +116,7 @@ class Network:
 		for node in nodes:
 			neighbors.append(self.get_neighbors(node)) if not as_list else neighbors.append(list(self.graph.neighbors(node)))
 		return neighbors
-
+##### We could use two statuse, EPS and Fail or not. Sewnd array with Statuses, adn recive array. I will send you matrix A.
 
 if __name__ == "__main__":
 	
