@@ -20,6 +20,7 @@ def select_values(nodes, size):
         select[n] = 1
     return select
 
+
 LIMIT_FAIL = 0.3  # Company fails if 30% of its EPS drops
 LOSS_IF_INFECTED = 0.85
 
@@ -29,6 +30,7 @@ def select_values(nodes, size):
     for n in nodes:
         select[n] = 1
     return select
+
 
 class Network:
 
@@ -58,34 +60,33 @@ class Network:
         Initializes a network with `n` nodes.
         Either `m` edges or `p` probability of an edge should be provided.
 
-		Parameters
-		----------
-		`n` : int
-		Number of nodes
-		`m` : int
-		Number of edges
-		`p` : float
-		Probability of an edge
-		'''
-		if m is not None:
-			self.graph = nx.gnm_random_graph(n, m, directed = True)
-		elif p is not None:
-			self.graph = nx.erdos_renyi_graph(n, p, directed = True)
-	
-		else:
-			raise ValueError("Either m or p must be provided.")
-               
+        Parameters
+        ----------
+        `n` : int
+        Number of nodes
+        `m` : int
+        Number of edges
+        `p` : float
+        Probability of an edge
+        """
+        if m is not None:
+            self.graph = nx.gnm_random_graph(n, m, directed=True)
+        elif p is not None:
+            self.graph = nx.erdos_renyi_graph(n, p, directed=True)
+
+        else:
+            raise ValueError("Either m or p must be provided.")
+
         _lambda = _lambda or 1.5
         self.eps = np.random.exponential(_lambda, n)
-	
-	def set_ownerships(self):
-		"""
-		Sets all edges weights
-		"""
-		A = ownership_matrix(graph.number_of_nodes(), graph.edges())
-		for u, v in G.edges():
-			graph[u][v]['ownership'] = A[u,v]
 
+    def set_ownerships(self):
+        """
+        Sets all edges weights
+        """
+        A = ownership_matrix(graph.number_of_nodes(), graph.edges())
+        for u, v in G.edges():
+            graph[u][v]["ownership"] = A[u, v]
 
     def set_status(self, node, status):
         ### SET AT 0 and 1 status, and add counter EPS. MEYBE WE CLEANING CODE SET IT AS CHILD CLASS
@@ -109,14 +110,16 @@ class Network:
     def propogate_shock(self):
         failed_nodes = list(self.get_all_statuses().keys())
         neighbours = set(
-            sum(self.get_multiple_neighbors(failed_nodes, as_list=True), []) # Gets all neighbours, combines into single set
-        ) 
-        
-		# Calculate change in EPS here, dependent on A
-        delta_eps = self.eps*LOSS_IF_INFECTED * select_values(failed_nodes)
+            sum(
+                self.get_multiple_neighbors(failed_nodes, as_list=True), []
+            )  # Gets all neighbours, combines into single set
+        )
+
+        # Calculate change in EPS here, dependent on A
+        delta_eps = self.eps * LOSS_IF_INFECTED * select_values(failed_nodes)
         self.eps -= delta_eps
-        
-		# For 90 days
+
+        # For 90 days
         for i in range(90):
             delta_eps = delta_eps @ A
             self.eps = self.eps - delta_eps
