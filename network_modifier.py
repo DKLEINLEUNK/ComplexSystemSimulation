@@ -8,9 +8,52 @@ Running this module as a script shows some example use cases.
 
 
 import numpy as np
-
+from scipy.sparse import csr_array
 from network import Network
 
+
+def ownership_matrix(n,edges):
+    '''
+    Create a matrix of ownerships
+    '''
+    edges = np.array(edges)
+    ownerships = np.random.rand(edges.shape[0])
+    A = csr_array((ownerships,(edges[:,0], edges[:,1])), shape = (n,n))
+    A = A.toarray()
+    #A = A/np.sum(A)
+    return A
+
+def select_values(nodes,size):
+    select = np.zeros(size)
+    for n in nodes:
+        select[n] = 1
+    return select
+
+def create_shock(network:Network, size):
+	"""
+	Creates the default shock into the system, by failing n businesses
+
+	Parameters
+	----------
+		size: Number of companies that fail
+	"""
+	for i in range(size):
+		node = np.random.randint(0, len(network.graph.nodes))
+		network.set_status(node, 1)
+
+def propagate_shock(network:Network, loos_if_infected):
+	failed_nodes = list(network.get_all_statuses().keys())
+
+	# Calculate change in EPS here, dependent on A
+	delta_eps = network.eps * loos_if_infected * select_values(failed_nodes,network.graph.number_of_nodes())
+	network.eps -= delta_eps
+
+	# For 90 days
+	for i in range(90):
+		delta_eps = delta_eps @ network.A
+		network.eps = network.eps - delta_eps
+		##### IMPLEMENT FAILURE OF NODES IN CASCADES
+		print(f"i: {i}, EPS: {network.eps}")
 
 def degrade(network:Network, node=None, random=False):
 	'''

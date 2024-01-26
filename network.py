@@ -7,29 +7,13 @@ Running this module as a script will generate an example network.
 
 import networkx as nx
 import numpy as np
-from economy_functions import ownership_matrix
+from scipy.sparse import csr_array
+from network_modifier import *
 
 
 LIMIT_FAIL = 0.3  # Company fails if 30% of its EPS drops
 LOSS_IF_INFECTED = 0.85
 
-
-def select_values(nodes, size):
-    select = np.zeros(size)
-    for n in nodes:
-        select[n] = 1
-    return select
-
-
-LIMIT_FAIL = 0.3  # Company fails if 30% of its EPS drops
-LOSS_IF_INFECTED = 0.85
-
-
-def select_values(nodes, size):
-    select = np.zeros(size)
-    for n in nodes:
-        select[n] = 1
-    return select
 
 
 class Network:
@@ -70,7 +54,7 @@ class Network:
         Probability of an edge
         """
         if m is not None:
-            self.graph = nx.gnm_random_graph(n, m, directed=True)
+            self.graph = nx.gnm_random_graph(n, m, seed= 100, directed=True)
         elif p is not None:
             self.graph = nx.erdos_renyi_graph(n, p, directed=True)
 
@@ -79,14 +63,24 @@ class Network:
 
         _lambda = _lambda or 1.5
         self.eps = np.random.exponential(_lambda, n)
+        self.eps_ini = self.eps
+        self.A = ownership_matrix(self.graph.number_of_nodes(), self.graph.edges())
+        print(self.A)
 
-    def set_ownerships(self):
+    def set_edge(self,edge):
+        return None
+
+    def set_edges(self,edges):
+        return None
+
+    def set_all_edges(self):
         """
         Sets all edges weights
         """
-        A = ownership_matrix(graph.number_of_nodes(), graph.edges())
+
         for u, v in G.edges():
-            graph[u][v]["ownership"] = A[u, v]
+            graph[u][v]["ownership"] = self.A[u, v]
+        return None
 
     def set_status(self, node, status):
         ### SET AT 0 and 1 status, and add counter EPS. MEYBE WE CLEANING CODE SET IT AS CHILD CLASS
@@ -94,36 +88,6 @@ class Network:
             nx.set_node_attributes(self.graph, {node: status}, "status")
         else:
             raise ValueError("Status must be 0, 1, or 2.")
-
-    def create_shock(self, size):
-        """
-        Creates the default shock into the system, by failing n businesses
-
-        Parameters
-        ----------
-            size: Number of companies that fail
-        """
-        for i in range(size):
-            node = np.random.randint(0, len(self.graph.nodes))
-            self.set_status(node, 1)
-
-    def propogate_shock(self):
-        failed_nodes = list(self.get_all_statuses().keys())
-        neighbours = set(
-            sum(
-                self.get_multiple_neighbors(failed_nodes, as_list=True), []
-            )  # Gets all neighbours, combines into single set
-        )
-
-        # Calculate change in EPS here, dependent on A
-        delta_eps = self.eps * LOSS_IF_INFECTED * select_values(failed_nodes)
-        self.eps -= delta_eps
-
-        # For 90 days
-        for i in range(90):
-            delta_eps = delta_eps @ A
-            self.eps = self.eps - delta_eps
-            print(f"i: {i}, EPS: {self.eps}")
 
     def set_statuses(self, nodes, statuses):
         """
@@ -189,22 +153,8 @@ if __name__ == "__main__":
     ### EXAMPLE USAGE ###
 
     # Creating a network
-    network = Network(n=1_001, m=3_000)
-    print(network.eps)
-    network.create_shock(5)
-    network.propogate_shock()
-    # nodes = np.array([1, 10, 100, 1_000, 10_000, 100_000])  # nodes to check status of
-    # print(
-    #     f"Generated a network with {network.graph.number_of_nodes()} nodes and {network.graph.number_of_edges()} edges."
-    # )
-    # print(
-    #     f"Status of nodes 1, 10, 100, 1_000, 10_000, 100_000: {network.get_all_statuses()}"
-    # )
+    network = Network(n=1_0000, p=0.4)
+    
+    create_shock(network,300)
+    propagate_shock(network, LOSS_IF_INFECTED)
 
-    # # Getting the neighbors of a specific node (WARNING: only use as_list=True for testing and illustration purposes, as it is a bottleneck)
-    # neighbors = network.get_neighbors(10, as_list=True)
-    # print(f"Neighbors of node 10: {neighbors}")
-
-    # # Getting the neighbors of an array of nodes (WARNING: only use as_list=True for testing and illustration purposes, as it is a bottleneck)
-    # neighbors = network.get_multiple_neighbors(nodes, as_list=True)
-    # print(f"Neighbors of nodes 1, 10, 100, 1_000, 10_000, 100_000: {neighbors}")
