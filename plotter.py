@@ -43,14 +43,21 @@ def plot_algorithm_efficiency():
     times = []
 
     # Read the data from the file
-    with open('execution_times.txt', 'r') as f:
-        for line in f:
-            data = line.rstrip('\n').split(', ')
-            nodes.append(int(data[0]))
-            times.append(float(data[2]))
+    filename = ['execution_times_3R.txt', 'execution_times_ER.txt', 'execution_times_BA.txt']
+    color = ['blue', 'red', 'green']
+    names = ['3R', 'ER', 'BA']
+    for i in range(3):
+        with open(filename[i], 'r') as f:
+            for line in f:
+                data = line.rstrip('\n').split(', ')
+                nodes.append(int(data[0]))
+                times.append(float(data[2]))
             
-    plt.plot(nodes, times, color='blue', marker='x')
-    
+        plt.plot(nodes, times, color=color[i], marker='x', label=names[i])
+        nodes = []
+        times = []
+
+    plt.legend()    
     plt.show()
 
 plot_algorithm_efficiency()
