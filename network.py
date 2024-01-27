@@ -88,6 +88,38 @@ class Network:
         else:
             raise ValueError("Status must be 0, 1, or 2.")
 
+    def create_shock(self, size):
+        """
+        Creates the default shock into the system, by failing n businesses
+
+        Parameters
+        ----------
+            size: Number of companies that fail
+        """
+        for i in range(size):
+            node = np.random.randint(0, len(self.graph.nodes))
+            self.set_status(node, 1)
+
+    def propogate_shock(self):
+        failed_nodes = list(self.get_all_statuses().keys())
+        neighbours = set(
+            sum(
+                self.get_multiple_neighbors(failed_nodes, as_list=True), []
+            )  # Gets all neighbours, combines into single set
+        )
+
+        # Calculate change in EPS here, dependent on A
+        delta_eps = self.eps * LOSS_IF_INFECTED * select_values(failed_nodes)
+        init_eps = self.eps.copy()
+        self.eps -= delta_eps
+
+        # For 90 days
+        for i in range(90):
+            delta_eps = delta_eps @ 
+            self.eps = self.eps - delta_eps
+            print((init_eps - self.eps) / init_eps < 1 - LIMIT_FAIL)
+            print(f"i: {i}, EPS: {self.eps}")
+
     def set_statuses(self, nodes, statuses):
         """
         Sets the statuses of an array of nodes.
