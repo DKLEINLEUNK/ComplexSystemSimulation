@@ -65,7 +65,6 @@ class Network:
         self.eps = np.random.exponential(_lambda, n)
         self.eps_ini = self.eps
         self.A = ownership_matrix(self.graph.number_of_nodes(), self.graph.edges())
-        print(self.A)
 
     def set_edge(self,edge):
         return None
@@ -153,8 +152,7 @@ if __name__ == "__main__":
     ### EXAMPLE USAGE ###
 
     # Creating a network
-    network = Network(n=1_0000, p=0.4)
-    
+    network = Network(n=1_0000, m=4000)
     create_shock(network,300)
-    propagate_shock(network, LOSS_IF_INFECTED)
+    propagate_shock(network,0.85)
 

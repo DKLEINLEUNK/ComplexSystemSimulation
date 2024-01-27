@@ -23,12 +23,6 @@ def ownership_matrix(n,edges):
     #A = A/np.sum(A)
     return A
 
-def select_values(nodes,size):
-    select = np.zeros(size)
-    for n in nodes:
-        select[n] = 1
-    return select
-
 def create_shock(network:Network, size):
 	"""
 	Creates the default shock into the system, by failing n businesses
@@ -37,22 +31,19 @@ def create_shock(network:Network, size):
 	----------
 		size: Number of companies that fail
 	"""
-	for i in range(size):
-		node = np.random.randint(0, len(network.graph.nodes))
-		network.set_status(node, 1)
+	nodes = np.random.choice(len(network.graph.nodes),size = size, replace = False)
+	network.set_statuses(nodes, np.ones(len(nodes)))
 
 def propagate_shock(network:Network, loos_if_infected):
 	failed_nodes = list(network.get_all_statuses().keys())
-
 	# Calculate change in EPS here, dependent on A
-	delta_eps = network.eps * loos_if_infected * select_values(failed_nodes,network.graph.number_of_nodes())
+	delta_eps = network.eps * loos_if_infected * np.isin(np.arange(network.graph.number_of_nodes()), failed_nodes)
 	network.eps -= delta_eps
 
 	# For 90 days
 	for i in range(90):
 		delta_eps = delta_eps @ network.A
 		network.eps = network.eps - delta_eps
-		##### IMPLEMENT FAILURE OF NODES IN CASCADES
 		print(f"i: {i}, EPS: {network.eps}")
 
 def degrade(network:Network, node=None, random=False):
