@@ -9,9 +9,10 @@ import networkx as nx
 import numpy as np
 from scipy.sparse import csr_array
 from network_modifier import *
+from economy_functions import *
 
 
-LIMIT_FAIL = 0.3  # Company fails if 30% of its EPS drops
+LIMIT_FAIL = 0.4  # Company fails if 30% of its EPS drops
 LOSS_IF_INFECTED = 0.85
 
 
@@ -64,6 +65,13 @@ class Network:
         _lambda = _lambda or 1.5
         self.eps = np.random.exponential(_lambda, n)
         self.eps_ini = self.eps
+
+        self.mpe = 1.5 #### VERY RANDOM VALUE, IS THE AVERAGE PE
+        self.mpe_ini = self.mpe
+
+        self.pi = self.mpe * self.eps
+        self.pi_ini = self.pi
+
         self.A = ownership_matrix(self.graph.number_of_nodes(), self.graph.edges())
 
     def set_edge(self,edge):
@@ -87,38 +95,6 @@ class Network:
             nx.set_node_attributes(self.graph, {node: status}, "status")
         else:
             raise ValueError("Status must be 0, 1, or 2.")
-
-    def create_shock(self, size):
-        """
-        Creates the default shock into the system, by failing n businesses
-
-        Parameters
-        ----------
-            size: Number of companies that fail
-        """
-        for i in range(size):
-            node = np.random.randint(0, len(self.graph.nodes))
-            self.set_status(node, 1)
-
-    def propogate_shock(self):
-        failed_nodes = list(self.get_all_statuses().keys())
-        neighbours = set(
-            sum(
-                self.get_multiple_neighbors(failed_nodes, as_list=True), []
-            )  # Gets all neighbours, combines into single set
-        )
-
-        # Calculate change in EPS here, dependent on A
-        delta_eps = self.eps * LOSS_IF_INFECTED * select_values(failed_nodes)
-        init_eps = self.eps.copy()
-        self.eps -= delta_eps
-
-        # For 90 days
-        for i in range(90):
-            delta_eps = delta_eps @ 
-            self.eps = self.eps - delta_eps
-            print((init_eps - self.eps) / init_eps < 1 - LIMIT_FAIL)
-            print(f"i: {i}, EPS: {self.eps}")
 
     def set_statuses(self, nodes, statuses):
         """
@@ -185,6 +161,11 @@ if __name__ == "__main__":
 
     # Creating a network
     network = Network(n=1_0000, m=4000)
+    network.set_all_statuses(2)
     create_shock(network,300)
-    propagate_shock(network,0.85)
+    for i in range(10):
+        propagate_shock(network,LOSS_IF_INFECTED,LIMIT_FAIL)
+        total_failures = len(list(filter(lambda item: item[1] in {0, 1}, network.get_all_statuses().items())))
+        print(f'Total fraction of failures: {total_failures/network.graph.number_of_nodes()}') 
+
 

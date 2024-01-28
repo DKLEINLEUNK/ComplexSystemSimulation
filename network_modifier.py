@@ -8,20 +8,9 @@ Running this module as a script shows some example use cases.
 
 
 import numpy as np
-from scipy.sparse import csr_array
 from network import Network
+from economy_functions import *
 
-
-def ownership_matrix(n,edges):
-    '''
-    Create a matrix of ownerships
-    '''
-    edges = np.array(edges)
-    ownerships = np.random.rand(edges.shape[0])
-    A = csr_array((ownerships,(edges[:,0], edges[:,1])), shape = (n,n))
-    A = A.toarray()
-    #A = A/np.sum(A)
-    return A
 
 def create_shock(network:Network, size):
 	"""
@@ -34,17 +23,59 @@ def create_shock(network:Network, size):
 	nodes = np.random.choice(len(network.graph.nodes),size = size, replace = False)
 	network.set_statuses(nodes, np.ones(len(nodes)))
 
-def propagate_shock(network:Network, loos_if_infected):
-	failed_nodes = list(network.get_all_statuses().keys())
+def get_failed_nodes(network:Network, loss_if_infected):
+	"""
+	Given a network, it check if there are any new infected nodes (node = 1)
+	Return the failed_nodes array and loss_infected for multiplication in algorithm
+	"""
+
+	failed_nodes = np.array(list(filter(lambda item: item[1] == 1, network.get_all_statuses().items())))
+	if failed_nodes.shape[0] == 0:
+		### THIS NEEDS TO BE IMPROVED; I SET AS IF THERE ARE NO NEW INFECTED NODES THEN WE ARE IN STABILITY AND THE PROGRAMS STOP
+		raise ValueError("There are not any new failed nodes, stability has been reached")
+	else:
+		failed_nodes = failed_nodes[:,0].astype(int)
+		loss_infected = np.zeros(network.graph.number_of_nodes())
+		loss_infected[failed_nodes] = loss_if_infected
+	return failed_nodes,loss_infected
+
+def propagate_shock(network:Network, loss_if_infected, threshold):
+	"""
+	Given a network, and a loss_if_infected, propagates a shocl during 90 days.
+	After 90 days:
+		- new infected nodes turn to 1.
+		- Already failed nodes turn to 0 or 2 (2 means they recover)
+		- eps_initial is set at the end eps.
+	Inputs:
+		- Loss_if infected: % loss of eps if a node fails
+		- Threshold: % threshold to see a failure
+	"""
+
+	failed_nodes,loss_infected = get_failed_nodes(network,loss_if_infected)
 	# Calculate change in EPS here, dependent on A
-	delta_eps = network.eps * loos_if_infected * np.isin(np.arange(network.graph.number_of_nodes()), failed_nodes)
+	delta_eps = network.eps * loss_infected
 	network.eps -= delta_eps
+
+	network.pi = network.mpe * network.eps
 
 	# For 90 days
 	for i in range(90):
 		delta_eps = delta_eps @ network.A
 		network.eps = network.eps - delta_eps
-		print(f"i: {i}, EPS: {network.eps}")
+		network.pi = network.mpe * network.eps
+		network.mpe = np.average(network.eps/network.pi) ## Compute new network mpe
+		#print(f"i: {i}, EPS: {network.eps}")
+
+	## Setting all new failed nodes to failed and setting already failed nodes to dead(0)
+	new_failed_nodes = np.where(((network.pi_ini-network.pi)/(network.pi_ini)) > threshold)[0]
+	network.set_statuses(new_failed_nodes, np.ones(len(new_failed_nodes)))
+	fail(network,failed_nodes)
+	
+	## Setting new conditions as initial for next period
+	network.eps_ini = network.eps 
+	network.mpe_ini = network.mpe
+	network.pi_ini = network.pi
+
 
 def degrade(network:Network, node=None, random=False):
 	'''
@@ -67,7 +98,6 @@ def degrade(network:Network, node=None, random=False):
 	if random:
 		node = np.random.choice(network.graph.nodes)
 	network.set_status(node, int(network.get_status(node) - 1))
-
 
 def fail(network:Network, nodes):
 	'''
