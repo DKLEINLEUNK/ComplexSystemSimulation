@@ -79,7 +79,6 @@ class Network:
 
         self.sector = np.random.randint(0, 12, n)
         self.mpe = SECTOR_MPE[self.sector]  # Now uses the PE of a sector
-        # self.mpe = 22
         self.mpe_ini = self.mpe
 
         self.pi = self.mpe * self.eps

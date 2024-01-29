@@ -60,7 +60,7 @@ def threshold_test(network: Network, threshold):
         list(filter(lambda item: item[1] == 2, network.get_all_statuses().items()))
     )
     possible_weak_nodes = np.where(
-        ((network.pi_ini - network.pi) / (network.pi_ini)) > threshold
+        ((network.pi_ini - network.pi) / (network.pi_ini)) < threshold
     )[0]
     new_weak_nodes = np.intersect1d(healthy_nodes, possible_weak_nodes)
     return new_weak_nodes
@@ -88,16 +88,16 @@ def propagate_shock(network: Network, loss_if_infected, threshold):
 
     network.pi = network.mpe * network.eps
 
-    # network.mpe = np.average(network.eps/network.pi)
+    network.mpe = np.average(network.eps / network.pi)
 
     # For 90 days
     for i in range(90):
         delta_eps = delta_eps @ network.A
-        network.eps = network.eps - delta_eps
+        network.eps -= delta_eps
         network.pi = network.mpe * network.eps
-        # print(network.pi)
-        # network.mpe = np.average(network.eps/network.pi) ## Compute new network mpe
-        # print(f"i: {i}, EPS: {network.eps}")
+        network.mpe = np.average(network.eps / network.pi)  ## Compute new network mpe
+        print(network.mpe)
+        print(f"i: {i}, EPS: {network.eps}")
 
     ## Setting all new weak nodes to weak, status = 1
     new_weak_nodes = threshold_test(network, threshold)
