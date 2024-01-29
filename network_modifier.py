@@ -41,7 +41,7 @@ def get_failed_nodes(network:Network, loss_if_infected):
 
 def propagate_shock(network:Network, loss_if_infected, threshold):
 	"""
-	Given a network, and a loss_if_infected, propagates a shocl during 90 days.
+	Given a network, and a loss_if_infected, propagates a shock during 90 days.
 	After 90 days:
 		- new infected nodes turn to 1.
 		- Already failed nodes turn to 0 or 2 (2 means they recover)
@@ -58,6 +58,8 @@ def propagate_shock(network:Network, loss_if_infected, threshold):
 
 	network.pi = network.mpe * network.eps
 
+	network,mpe = np.average(network.eps/network.pi)
+
 	# For 90 days
 	for i in range(90):
 		delta_eps = delta_eps @ network.A
@@ -69,7 +71,7 @@ def propagate_shock(network:Network, loss_if_infected, threshold):
 	## Setting all new failed nodes to failed and setting already failed nodes to dead(0)
 	new_failed_nodes = np.where(((network.pi_ini-network.pi)/(network.pi_ini)) > threshold)[0]
 	network.set_statuses(new_failed_nodes, np.ones(len(new_failed_nodes)))
-	fail(network,failed_nodes)
+	fail(network,failed_nodes) ## Here maybe chanign his stock or EPS to 0?
 	
 	## Setting new conditions as initial for next period
 	network.eps_ini = network.eps 

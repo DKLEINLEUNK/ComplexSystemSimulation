@@ -12,7 +12,7 @@ from network_modifier import *
 from economy_functions import *
 
 
-LIMIT_FAIL = 0.4  # Company fails if 30% of its EPS drops
+LIMIT_FAIL = 0.5  # Company fails if 30% of its EPS drops
 LOSS_IF_INFECTED = 0.85
 
 
@@ -84,9 +84,9 @@ class Network:
         """
         Sets all edges weights
         """
-
-        for u, v in G.edges():
-            graph[u][v]["ownership"] = self.A[u, v]
+        print(self.graph.edges())
+        for u, v in self.graph.edges():
+            self.graph[u][v]["ownership"] = self.A[u, v]
         return None
 
     def set_status(self, node, status):
@@ -160,9 +160,12 @@ if __name__ == "__main__":
     ### EXAMPLE USAGE ###
 
     # Creating a network
-    network = Network(n=1_0000, m=4000)
+    network = Network(n=10_000, m=1000)
     network.set_all_statuses(2)
-    create_shock(network,300)
+
+    network.set_all_edges()
+    
+    create_shock(network,10)
     for i in range(10):
         propagate_shock(network,LOSS_IF_INFECTED,LIMIT_FAIL)
         total_failures = len(list(filter(lambda item: item[1] in {0, 1}, network.get_all_statuses().items())))
