@@ -14,7 +14,9 @@ from economy_functions import *
 
 LIMIT_FAIL = 0.8  # Company fails if 30% of its EPS drops
 LOSS_IF_INFECTED = 0.6
-
+SECTOR_MPE = np.array(
+    [7, 9, 10, 12, 14, 15, 16, 17, 18, 19, 22, 31]
+)  # Median MPE per sector
 
 
 class Network:
@@ -55,13 +57,17 @@ class Network:
         Probability of an edge
         """
         if m is not None:
-            self.graph = nx.gnm_random_graph(n, m, seed= 100)       
+            self.graph = nx.gnm_random_graph(n, m, seed=100)
         elif p is not None:
-            self.graph = nx.erdos_renyi_graph(n, p, seed = 100,)
+            self.graph = nx.erdos_renyi_graph(
+                n,
+                p,
+                seed=100,
+            )
 
         else:
             raise ValueError("Either m or p must be provided.")
-        
+
         ## Turning graph to directed
         self.graph = self.graph.to_directed()
         edges = self.graph.edges()
@@ -71,7 +77,8 @@ class Network:
         self.eps = np.random.exponential(_lambda, n)
         self.eps_ini = self.eps
 
-        self.mpe = 1.5 #### VERY RANDOM VALUE, IS THE AVERAGE PE
+        self.sector = np.random.randint(0, 12, n)
+        self.mpe = SECTOR_MPE[self.sector]  # Now uses the PE of a sector
         self.mpe_ini = self.mpe
 
         self.pi = self.mpe * self.eps
@@ -79,10 +86,10 @@ class Network:
 
         self.A = ownership_matrix(self.graph.number_of_nodes(), self.graph.edges())
 
-    def set_edge(self,edge):
+    def set_edge(self, edge):
         return None
 
-    def set_edges(self,edges):
+    def set_edges(self, edges):
         return None
 
     def set_all_edges(self):
@@ -171,10 +178,16 @@ if __name__ == "__main__":
 
     network.set_all_edges()
 
-    create_shock(network,10)
+    create_shock(network, 10)
     for i in range(10):
-        propagate_shock(network,LOSS_IF_INFECTED,LIMIT_FAIL)
-        total_failures = len(list(filter(lambda item: item[1] in {0, 1}, network.get_all_statuses().items())))
-        print(f'Total fraction of failures: {total_failures/network.graph.number_of_nodes()}') 
-        
-
+        propagate_shock(network, LOSS_IF_INFECTED, LIMIT_FAIL)
+        total_failures = len(
+            list(
+                filter(
+                    lambda item: item[1] in {0, 1}, network.get_all_statuses().items()
+                )
+            )
+        )
+        print(
+            f"Total fraction of failures: {total_failures/network.graph.number_of_nodes()}"
+        )
