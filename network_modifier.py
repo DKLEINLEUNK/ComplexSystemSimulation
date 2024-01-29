@@ -4,6 +4,12 @@ This module contains functions for modifying a network.
 It is meant to be used in conjunction with the `Network` class.
 
 Running this module as a script shows some example use cases.
+
+
+Guide:
+	- Healthy nodes: Nodes with status = 2, which means they have not become weak/infected,
+	- Weak nodes: Nodes with status = 1, that in the next quarter will have an 85% decrease in it's eps.
+	- Failed nodes: Nodes with status = 0, have been already become weak, thus they will not have another 85% in the next quarter and their eps is 0.
 '''
 
 
@@ -23,42 +29,58 @@ def create_shock(network:Network, size):
 	nodes = np.random.choice(len(network.graph.nodes),size = size, replace = False)
 	network.set_statuses(nodes, np.ones(len(nodes)))
 
-def get_failed_nodes(network:Network, loss_if_infected):
+def get_weak_nodes(network:Network, loss_if_infected):
 	"""
 	Given a network, it check if there are any new infected nodes (node = 1)
-	Return the failed_nodes array and loss_infected for multiplication in algorithm
+	Return the weak_nodes array and loss_infected for multiplication in algorithm
 	"""
 
-	failed_nodes = np.array(list(filter(lambda item: item[1] == 1, network.get_all_statuses().items())))
-	if failed_nodes.shape[0] == 0:
-		### THIS NEEDS TO BE IMPROVED; I SET AS IF THERE ARE NO NEW INFECTED NODES THEN WE ARE IN STABILITY AND THE PROGRAMS STOP
-		raise ValueError("There are not any new failed nodes, stability has been reached")
+	weak_nodes = np.array(list(filter(lambda item: item[1] == 1, network.get_all_statuses().items())))
+	loss_infected = np.zeros(network.graph.number_of_nodes())
+	if weak_nodes.shape[0] == 0:
+		return weak_nodes,loss_infected
 	else:
-		failed_nodes = failed_nodes[:,0].astype(int)
-		loss_infected = np.zeros(network.graph.number_of_nodes())
-		loss_infected[failed_nodes] = loss_if_infected
-	return failed_nodes,loss_infected
+		weak_nodes = weak_nodes[:,0].astype(int)
+		loss_infected[weak_nodes] = loss_if_infected
+	return weak_nodes,loss_infected
+
+def threshold_test(network:Network, threshold):
+	"""
+	Returns an array weak_nodes which are all healthy nodes that had a threshold reduction.
+	Only set as new_weak_nodes the nodes that come from healthy.
+	Inputs:
+		- Network
+		- Array of healthy nodes in the network
+	"""
+	healthy_nodes = np.array(list(filter(lambda item: item[1] == 2, network.get_all_statuses().items())))
+	possible_weak_nodes = np.where(((network.pi_ini-network.pi)/(network.pi_ini)) > threshold)[0]
+	new_weak_nodes = np.intersect1d(healthy_nodes, possible_weak_nodes)
+	return new_weak_nodes
+
+
+
 
 def propagate_shock(network:Network, loss_if_infected, threshold):
 	"""
 	Given a network, and a loss_if_infected, propagates a shock during 90 days.
 	After 90 days:
 		- new infected nodes turn to 1.
-		- Already failed nodes turn to 0 or 2 (2 means they recover)
+		- Already weak nodes turn to 0 or 2 (2 means they recover)
 		- eps_initial is set at the end eps.
 	Inputs:
 		- Loss_if infected: % loss of eps if a node fails
 		- Threshold: % threshold to see a failure
 	"""
+	
+	weak_nodes,loss_infected = get_weak_nodes(network,loss_if_infected) ##Nodes that will have a 85% decrease in next quarter
 
-	failed_nodes,loss_infected = get_failed_nodes(network,loss_if_infected)
 	# Calculate change in EPS here, dependent on A
 	delta_eps = network.eps * loss_infected
 	network.eps -= delta_eps
 
 	network.pi = network.mpe * network.eps
 
-	network,mpe = np.average(network.eps/network.pi)
+	network.mpe = np.average(network.eps/network.pi)
 
 	# For 90 days
 	for i in range(90):
@@ -68,10 +90,12 @@ def propagate_shock(network:Network, loss_if_infected, threshold):
 		network.mpe = np.average(network.eps/network.pi) ## Compute new network mpe
 		#print(f"i: {i}, EPS: {network.eps}")
 
-	## Setting all new failed nodes to failed and setting already failed nodes to dead(0)
-	new_failed_nodes = np.where(((network.pi_ini-network.pi)/(network.pi_ini)) > threshold)[0]
-	network.set_statuses(new_failed_nodes, np.ones(len(new_failed_nodes)))
-	fail(network,failed_nodes) ## Here maybe chanign his stock or EPS to 0?
+	## Setting all new weak nodes to weak, status = 1
+	new_weak_nodes = threshold_test(network, threshold)
+	network.set_statuses(new_weak_nodes, np.ones(len(new_weak_nodes)))
+
+	## Setting already weak nodes to failed, status = 0. Need to implement so eps and pi also change
+	fail(network,weak_nodes)
 	
 	## Setting new conditions as initial for next period
 	network.eps_ini = network.eps 
@@ -154,7 +178,7 @@ def reinforce(network:Network, nodes, epsilon):
 	'''
 	Description
 	-----------
-	Reinforce failed an array of nodes with probability epsilon.
+	Reinforce weak an array of nodes with probability epsilon.
 
 	TODO add numpy enhancement to remove this additional loop (use an array of probabilities)
 	'''
