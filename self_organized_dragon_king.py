@@ -14,6 +14,7 @@ Running this module as a script run an example.
 '''
 
 import json
+import time
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -29,7 +30,7 @@ class Inoculation:
     Class to simulate the inoculation version of the self-organized dragon king model.
     '''
 
-    def __init__(self, n_steps, n_trials, n_nodes, n_edges=None, pr_edge=None, epsilon=0.2, verbose=False, visualize=False, export_dir=None):
+    def __init__(self, n_steps, n_trials, n_nodes, n_edges=None, pr_edge=None, d_regular=None, BA=False, epsilon=0.2, verbose=False, visualize=False, export_dir=None):
         '''
         Description
         -----------
@@ -47,6 +48,8 @@ class Inoculation:
             The number of edges in the network.
         `pr_edge` : float
             The probability that two nodes will be connected.
+        `d_regular` : int
+            The degree of each node in the regular random network.
         `epsilon` : float
             The probability that a weak node will be repaired as strong.
         `verbose` : bool
@@ -62,7 +65,7 @@ class Inoculation:
         self.n_nodes = n_nodes
         self.n_edges = n_edges
         self.pr_edge = pr_edge
-        self.network = Network(n_nodes, n_edges, pr_edge)
+        self.network = Network(n_nodes, n_edges, pr_edge, d_regular, BA)
         
         # Initialize the state
         self.network.set_all_statuses(1)
@@ -79,6 +82,7 @@ class Inoculation:
         self.verbose = verbose
         self.visualize = visualize
         self.export_dir = export_dir
+        self.exporting = False
 
         # Initialize the export directory
         if export_dir is not None:
@@ -104,8 +108,8 @@ class Inoculation:
                 # Execute a single step
                 self.step()
 
-            # Re-initialize the network
-            self.network = Network(self.n_nodes, self.n_edges, self.pr_edge)
+            # # Re-initialize the network
+            # self.network = Network(self.n_nodes, self.n_edges, self.pr_edge)
 
         print('\nSimulation completed.')
         
@@ -295,6 +299,7 @@ class Inoculation:
         self.exporting = True
         self.results = [[0]*self.n_steps]*self.n_trials
 
+
     def _store_step_results(self):
         '''
         Description
@@ -303,6 +308,7 @@ class Inoculation:
         '''
         self.results[self._itrial - 1][self._istep - 1] = self.cascade_dict
         print(f"Stored result for trial {self._itrial} and step {self._istep}.") if self.verbose else None
+
 
     def _export_results(self):
         '''
@@ -324,20 +330,33 @@ def complex_contagion():
 
 if __name__ == "__main__":
 
+    start = time.time()
+
     ### EXAMPLE USAGE ###
+    n_steps = 10
+    n_nodes = 100_000  # 10^5
+    n_edges = 300_000
+
     simulation = Inoculation(
-        n_steps=1000, 
+        n_steps=n_steps, 
         n_trials=1, 
-        n_nodes=10_000,  # N^5
-        n_edges=30_000, 
-        pr_edge=False,
+        n_nodes=n_nodes,
+        n_edges=None,
+        pr_edge=None,
+        d_regular=None,
+        BA=True,
         epsilon=0.001, 
         verbose=False, 
         visualize=False,
-        export_dir='exports/'
+        export_dir=None
     )
 
     # # Visualize the network at t = 0
     # simulation._visualize_network()
     
     simulation.run()
+
+    execution_time = time.time() - start
+
+    with open('execution_times.txt', 'a') as file:
+        file.write( f'{n_nodes}, {n_edges}, {execution_time / n_steps}\n' )

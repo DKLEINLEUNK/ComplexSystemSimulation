@@ -29,4 +29,35 @@ def plot_results(n_nodes=10_000):
     plt.show()
             
 
-plot_results()
+def plot_algorithm_efficiency():
+    # Initialize the plot
+    plt.figure()
+    plt.xlabel('number of nodes')
+    plt.ylabel('time per step')
+    plt.xscale('log')
+    # plt.yscale('log')
+    plt.title('Algorithm Efficiency')
+    plt.grid(True)
+
+    nodes = []
+    times = []
+
+    # Read the data from the file
+    filename = ['execution_times_3R.txt', 'execution_times_ER.txt', 'execution_times_BA.txt']
+    color = ['blue', 'red', 'green']
+    names = ['3R', 'ER', 'BA']
+    for i in range(3):
+        with open(filename[i], 'r') as f:
+            for line in f:
+                data = line.rstrip('\n').split(', ')
+                nodes.append(int(data[0]))
+                times.append(float(data[2]))
+            
+        plt.plot(nodes, times, color=color[i], marker='x', label=names[i])
+        nodes = []
+        times = []
+
+    plt.legend()    
+    plt.show()
+
+plot_algorithm_efficiency()

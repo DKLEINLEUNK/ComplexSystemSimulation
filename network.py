@@ -29,7 +29,7 @@ class Network:
 		Get the statuses of all nodes
 	'''
 
-	def __init__(self, n, m=None, p=None):
+	def __init__(self, n, m=None, p=None, d=None, BA=False):
 		'''
 		Description
 		-----------
@@ -39,18 +39,24 @@ class Network:
 		Parameters
 		----------
 		`n` : int
-		Number of nodes
+			Number of nodes
 		`m` : int
-		Number of edges
+			Number of edges
 		`p` : float
-		Probability of an edge
+			Probability of an edge
+		`d` : int
+			Number of dimensions for random regular graph
 		'''
 		if m is not None:
 			self.graph = nx.gnm_random_graph(n, m)
 		elif p is not None:
 			self.graph = nx.erdos_renyi_graph(n, p)
+		elif d is not None:
+			self.graph = nx.random_regular_graph(d, n)
+		elif BA:
+			self.graph = nx.barabasi_albert_graph(n, 3)
 		else:
-			raise ValueError("Either m or p must be provided.")
+			raise ValueError("Either m, p, d must be provided.")
 		
 
 	def set_status(self, node, status):
