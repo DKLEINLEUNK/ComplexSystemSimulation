@@ -7,6 +7,7 @@ Running this module as a script will generate an example network.
 
 import networkx as nx
 import numpy as np
+import pandas as pd
 from network_modifier import create_shock, get_weak_nodes, threshold_test, propagate_shock, degrade, fail, save_state, load_state
 from economy_functions import ownership_matrix
 
@@ -14,11 +15,22 @@ from economy_functions import ownership_matrix
 
 LIMIT_FAIL = 0.8  # Company fails if 30% of its EPS drops
 LOSS_IF_INFECTED = 0.6
-SECTOR_MPE = np.array(
-    [7, 9, 10, 12, 14, 15, 16, 17, 18, 19, 22, 31]
-)  # Median MPE per sector
-
+USE_REAL_DATA = True
 POWER_LAW_OWNS = 0.2 ## Need to improve with real data, or maybe we can research it's effect
+
+if USE_REAL_DATA == True:
+
+    file_path = "companies_data.csv"
+    data = pd.read_csv(file_path, delimiter=';', decimal=',')
+
+    EPS = np.array(data["EPS(rial)"]).astype(float)
+    SECTOR_MPE = data['Group P/E'].unique().astype(float) 
+
+else:
+    SECTOR_MPE = np.array(
+    [7, 9, 10, 12, 14, 15, 16, 17, 18, 19, 22, 31]
+    )  # Median MPE per sector
+
 
 
 class Network:
@@ -75,7 +87,11 @@ class Network:
         edges = self.graph.edges()
 
         _lambda = _lambda or 1.5
-        self.eps = np.random.exponential(_lambda, n)
+        if USE_REAL_DATA == True:
+            self.eps = EPS
+        else:
+            self.eps = _lambda = _lambda or 1.5
+            self.eps = np.random.exponential(_lambda, n)
         self.eps_ini = self.eps
 
         self.sector = np.random.randint(0, 12, n)
@@ -172,9 +188,9 @@ class Network:
 
 if __name__ == "__main__":
     ### EXAMPLE USAGE ###
-
+    ## Of real data is set as true, n = EPS.shape[0]
     # Creating a network
-    network = Network(n=10, p=0.2)
+    network = Network(n=EPS.shape[0], p=0.2)
     network.set_all_statuses(2)
 
     network.set_all_edges()

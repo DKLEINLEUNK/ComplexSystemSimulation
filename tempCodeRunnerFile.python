@@ -1,18 +1,6 @@
-import networkx as nx
-import matplotlib.pyplot as plt
+import pandas as pd 
+import numpy as np 
 
-# Create a simple graph
-G = nx.Graph()
-G.add_nodes_from([1, 2, 3])
-G.add_edges_from([(1, 2, {'weight': 0.5}), (2, 3, {'weight': 2.0})])
+data = pd.read_csv(companies_data.xlsx)
 
-# Draw the graph
-pos = nx.spring_layout(G)  # You can use different layout algorithms
-nx.draw(G, pos, with_labels=True, node_size=700, node_color='skyblue', font_size=10, font_color='black')
-
-# Add edge labels
-edge_labels = nx.get_edge_attributes(G, 'weight')
-nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
-
-# Show the plot
-plt.show()
+print(data)
