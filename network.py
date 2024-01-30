@@ -7,9 +7,9 @@ Running this module as a script will generate an example network.
 
 import networkx as nx
 import numpy as np
-from scipy.sparse import csr_array
-from network_modifier import *
-from economy_functions import *
+from network_modifier import create_shock, get_weak_nodes, threshold_test, propagate_shock, degrade, fail, save_state, load_state
+from economy_functions import ownership_matrix
+
 
 
 LIMIT_FAIL = 0.8  # Company fails if 30% of its EPS drops
@@ -17,6 +17,8 @@ LOSS_IF_INFECTED = 0.6
 SECTOR_MPE = np.array(
     [7, 9, 10, 12, 14, 15, 16, 17, 18, 19, 22, 31]
 )  # Median MPE per sector
+
+POWER_LAW_OWNS = 0.2 ## Need to improve with real data, or maybe we can research it's effect
 
 
 class Network:
@@ -71,7 +73,6 @@ class Network:
         ## Turning graph to directed
         self.graph = self.graph.to_directed()
         edges = self.graph.edges()
-        self.graph.add_edges_from(self.graph.reverse().edges())
 
         _lambda = _lambda or 1.5
         self.eps = np.random.exponential(_lambda, n)
@@ -84,7 +85,7 @@ class Network:
         self.pi = self.mpe * self.eps
         self.pi_ini = self.pi
 
-        self.A = ownership_matrix(self.graph.number_of_nodes(), self.graph.edges())
+        self.A = ownership_matrix(self.graph,POWER_LAW_OWNS)
 
     def set_edge(self, edge):
         return None
@@ -173,11 +174,11 @@ if __name__ == "__main__":
     ### EXAMPLE USAGE ###
 
     # Creating a network
-    network = Network(n=100, m=10)
+    network = Network(n=1000, p=0.2)
     network.set_all_statuses(2)
 
     network.set_all_edges()
-
+    print("i")
     create_shock(network, 10)
     for i in range(10):
         propagate_shock(network, LOSS_IF_INFECTED, LIMIT_FAIL)

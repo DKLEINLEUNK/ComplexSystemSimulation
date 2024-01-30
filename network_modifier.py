@@ -14,11 +14,10 @@ Guide:
 
 
 import numpy as np
-from network import Network
-from economy_functions import *
+from economy_functions import ownership_matrix,custom_sort
 
 
-def create_shock(network: Network, size):
+def create_shock(network, size):
     """
     Creates the default shock into the system, by failing n businesses
 
@@ -30,7 +29,7 @@ def create_shock(network: Network, size):
     network.set_statuses(nodes, np.ones(len(nodes)))
 
 
-def get_weak_nodes(network: Network, loss_if_infected):
+def get_weak_nodes(network, loss_if_infected):
     """
     Given a network, it check if there are any new infected nodes (node = 1)
     Return the weak_nodes array and loss_infected for multiplication in algorithm
@@ -48,7 +47,7 @@ def get_weak_nodes(network: Network, loss_if_infected):
     return weak_nodes, loss_infected
 
 
-def threshold_test(network: Network, threshold):
+def threshold_test(network, threshold):
     """
     Returns an array weak_nodes which are all healthy nodes that had a threshold reduction.
     Only set as new_weak_nodes the nodes that come from healthy.
@@ -66,7 +65,7 @@ def threshold_test(network: Network, threshold):
     return new_weak_nodes
 
 
-def propagate_shock(network: Network, loss_if_infected, threshold):
+def propagate_shock(network, loss_if_infected, threshold):
     """
     Given a network, and a loss_if_infected, propagates a shock during 90 days.
     After 90 days:
@@ -97,7 +96,7 @@ def propagate_shock(network: Network, loss_if_infected, threshold):
         network.pi = network.mpe * network.eps
         # network.mpe = np.average(network.eps / network.pi)  ## Compute new network mpe
         # print(network.mpe)
-        print(f"i: {i}, EPS: {network.pi.sum()}")
+        #print(f"i: {i}, EPS: {network.pi.sum()}")
 
     ## Setting all new weak nodes to weak, status = 1
     new_weak_nodes = threshold_test(network, threshold)
@@ -105,7 +104,7 @@ def propagate_shock(network: Network, loss_if_infected, threshold):
 
     ## Setting already weak nodes to failed, status = 0. Need to implement so eps and pi also change
     fail(network, weak_nodes)
-    print(network.get_all_statuses())
+    #print(network.get_all_statuses())
 
     ## Setting new conditions as initial for next period
     network.eps_ini = network.eps
@@ -113,7 +112,7 @@ def propagate_shock(network: Network, loss_if_infected, threshold):
     network.pi_ini = network.pi
 
 
-def degrade(network: Network, node=None, random=False):
+def degrade(network, node=None, random=False):
     """
     Description
     -----------
@@ -136,7 +135,7 @@ def degrade(network: Network, node=None, random=False):
     network.set_status(node, int(network.get_status(node) - 1))
 
 
-def fail(network: Network, nodes):
+def fail(network, nodes):
     """
     Description
     -----------
@@ -156,7 +155,7 @@ def fail(network: Network, nodes):
         )  # If company fails, then EPS drops by 85%
 
 
-def save_state(network: Network, verbose=False):
+def save_state(network, verbose=False):
     """
     Description
     -----------
@@ -171,7 +170,7 @@ def save_state(network: Network, verbose=False):
     return network.get_all_statuses()
 
 
-def load_state(network: Network, previous_state):
+def load_state(network, previous_state):
     """
     Description
     -----------
@@ -189,7 +188,7 @@ def load_state(network: Network, previous_state):
     network.set_all_statuses(previous_state)
 
 
-def reinforce(network: Network, nodes, epsilon):
+def reinforce(network, nodes, epsilon):
     """
     Description
     -----------
