@@ -88,16 +88,16 @@ def propagate_shock(network: Network, loss_if_infected, threshold):
 
     network.pi = network.mpe * network.eps
 
-    network.mpe = np.average(network.eps / network.pi)
+    # network.mpe = np.average(network.eps / network.pi)
 
     # For 90 days
     for i in range(90):
         delta_eps = delta_eps @ network.A
         network.eps -= delta_eps
         network.pi = network.mpe * network.eps
-        network.mpe = np.average(network.eps / network.pi)  ## Compute new network mpe
-        print(network.mpe)
-        print(f"i: {i}, EPS: {network.eps}")
+        # network.mpe = np.average(network.eps / network.pi)  ## Compute new network mpe
+        # print(network.mpe)
+        print(f"i: {i}, EPS: {network.pi.sum()}")
 
     ## Setting all new weak nodes to weak, status = 1
     new_weak_nodes = threshold_test(network, threshold)
@@ -105,6 +105,7 @@ def propagate_shock(network: Network, loss_if_infected, threshold):
 
     ## Setting already weak nodes to failed, status = 0. Need to implement so eps and pi also change
     fail(network, weak_nodes)
+    print(network.get_all_statuses())
 
     ## Setting new conditions as initial for next period
     network.eps_ini = network.eps
@@ -149,6 +150,10 @@ def fail(network: Network, nodes):
             The array of nodes to fail.
     """
     network.set_statuses(nodes, np.zeros(len(nodes), dtype=int))
+    if len(nodes) > 0:
+        network.eps[nodes] = (
+            network.eps[nodes] * 0.15
+        )  # If company fails, then EPS drops by 85%
 
 
 def save_state(network: Network, verbose=False):
