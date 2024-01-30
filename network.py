@@ -174,7 +174,7 @@ if __name__ == "__main__":
     ### EXAMPLE USAGE ###
 
     # Creating a network
-    network = Network(n=1000, p=0.2)
+    network = Network(n=10, p=0.2)
     network.set_all_statuses(2)
 
     network.set_all_edges()

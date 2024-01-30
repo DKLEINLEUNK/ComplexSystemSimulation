@@ -3,6 +3,7 @@ This file contains functions which are not called in the terminal, support funct
 """
 
 import numpy as  np
+import matplotlib.pyplot as plt
 import networkx as nx
 
 
@@ -10,13 +11,8 @@ def custom_sort(edge,weights):
     """
     Sort the edges by connection, edges of a high node to a small node are put first, while edges of a small node and high node are last
     """
-    diff = weights[edge[1]] - weights[edge[0]]
-    if diff>0:
-        return 1/diff
-    elif diff == 0:
-        return  1
-    else:
-        return weights[edge[1]] - weights[edge[0]]
+
+    return weights[edge[1]] - weights[edge[0]]
 
 
 def ownership_matrix(graph,exponent):
@@ -36,12 +32,9 @@ def ownership_matrix(graph,exponent):
     for i,edge in enumerate(edges):
         A[edge[0],edge[1]] = power_law_ownerships[i]
     
-    
-    sum_ =np.sum(A,axis = 0)
-    
-    for j in range(A.shape[0]):
-        if sum_[j]>1:
-            A[:,j] = A[:,j]/sum_[j]
+    sum_owns = np.sum(A, axis=0)
+    mask = sum_owns > 1
+    A[:, mask] /= sum_owns[mask]
     return A
 
 
@@ -49,12 +42,27 @@ def ownership_matrix(graph,exponent):
 
 if __name__ == "__main__":
     ### Graph generation
-    n = 10
-    graph = nx.gnm_random_graph(n, 4, seed = 100)
+    n = 10_000
+    graph = nx.gnm_random_graph(n, n*0.3, seed = 100)
     graph = graph.to_directed()
     ## Mode
+
     A = ownership_matrix(graph, 0.2)
 
+    edges = np.array(graph.edges())
+    weights = np.bincount(edges[:,0])
+    sort_indices = np.array([custom_sort(edge, weights) for edge in edges])
+    edges = edges[np.argsort(sort_indices)]
+    values = np.array([A[i, j] for i, j in edges])
+    
+    plt.scatter(np.arange(len(values)), values, c='blue', marker='o', s = 1)
 
-    #print(edges)
+
+    # Add labels and a title
+    plt.xlabel('edge [i, j]')
+    plt.ylabel('Value')
+    plt.title('Sparse Matrix Values vs Positions')
+    plt.show()
+
+        #print(edges)
 
