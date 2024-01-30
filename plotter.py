@@ -60,4 +60,22 @@ def plot_algorithm_efficiency():
     plt.legend()    
     plt.show()
 
-plot_algorithm_efficiency()
+# plot_algorithm_efficiency()
+
+
+def plot_failure_size_distribution(S, Pr_S):
+    # Initialize the plot
+    plt.figure()
+    plt.xlabel('s')
+    plt.ylabel('Pr(s)')
+    plt.xscale('log')
+    plt.yscale('log')
+
+    plt.plot(S, Pr_S, marker='x')
+    plt.show()
+
+
+if __name__ == '__main__':
+
+    N = np.linspace(0, 100_000, 100)
+    
