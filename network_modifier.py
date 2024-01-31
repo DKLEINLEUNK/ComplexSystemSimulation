@@ -69,7 +69,7 @@ def threshold_test(network, threshold):
     return new_weak_nodes
 
 
-def propagate_shock(network, loss_if_infected, threshold):
+def propagate_shock(network, loss_if_infected, threshold, recovery_rate = 0.1):
     """
     Given a network, and a loss_if_infected, propagates a shock during 90 days.
     After 90 days:
@@ -108,7 +108,7 @@ def propagate_shock(network, loss_if_infected, threshold):
     network.set_statuses(new_weak_nodes, np.ones(len(new_weak_nodes)))
 
     ## Setting already weak nodes to failed, status = 0. Need to implement so eps and pi also change
-    recovery_nodes = np.random.choice(weak_nodes, size=int(0.1 * len(weak_nodes)), replace=False)
+    recovery_nodes = np.random.choice(weak_nodes, size=int(recovery_rate * len(weak_nodes)), replace=False)
     weak_nodes = np.setdiff1d(weak_nodes, recovery_nodes)
     improve(network, recovery_nodes, loss_if_infected)
     fail(network, weak_nodes)

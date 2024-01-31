@@ -25,8 +25,8 @@ from economy_functions import ownership_matrix
 from tqdm import tqdm, trange
 
 
-LIMIT_FAIL = 0.5  # Company fails if 30% of its EPS drops
-LOSS_IF_INFECTED = 0.4
+LIMIT_FAIL = 0.2  # Company fails if 20% of its EPS drops
+LOSS_IF_INFECTED = 0.85
 USE_REAL_DATA = False
 POWER_LAW_OWNS = (
     0.2  ## Need to improve with real data, or maybe we can research it's effect
@@ -198,15 +198,18 @@ class Network:
 
 
 def single_simulation(args):
+    """Generates a single iteration of the network simulation"""
     loss_if_infected = args[0]
     limit_fail = args[1]
     shock_size = args[2]
-    network = Network(n=NETWORK_SIZE, p=0.2)
+    p = args[3]
+    recovery_rate = args[4]
+    network = Network(n=NETWORK_SIZE, p=p)
     network.set_all_statuses(2)
     network.set_all_edges()
     create_shock(network, shock_size)
     for i in range(10):
-        propagate_shock(network, loss_if_infected, limit_fail)
+        propagate_shock(network, loss_if_infected, limit_fail, recovery_rate)
         total_failures = len(
             list(
                 filter(
@@ -221,27 +224,41 @@ def single_simulation(args):
 
 
 def simulate_failures(
-    simulation_size, loss_if_infected, limit_fail, show_hist=False, shock_size=10
+    simulation_size,
+    loss_if_infected,
+    limit_fail,
+    store_hist=False,
+    shock_size=10,
+    p=0.1,
+    recovery_rate=0.1,
 ):
+    """Generate the entire simulation of the network simulation"""
     #  = np.zeros(simulation_size)
 
     pool = multiprocessing.Pool()
     simulation_results = pool.map(
         single_simulation,
-        [(loss_if_infected, limit_fail, shock_size) for i in range(simulation_size)],
+        [
+            (loss_if_infected, limit_fail, shock_size, p, recovery_rate)
+            for i in range(simulation_size)
+        ],
     )
     pool.close()
 
     fraction_failure_results = np.array(list(simulation_results))
     print(f"Average failure rate: {fraction_failure_results.mean()}")
 
-    if show_hist:
-        # plt.hist(fraction_failure_results, histtype="step")
-        sns.kdeplot(fraction_failure_results)
-        # plt.xlim([0.1, 0.6])
+    if store_hist:
+        plt.title(
+            f"Erdos-Renyi $p={p}$, failure limit = {limit_fail}, recovery rate = {recovery_rate}"
+        )
+        sns.kdeplot(fraction_failure_results, bw_method=0.2)
         plt.yscale("log")
-        # plt.xscale("log")
-        plt.show()
+        plt.xlabel("$s$")
+        plt.ylabel("$P(s)$")
+        plt.savefig(f"figures/p{p}-fail{limit_fail}-recov{recovery_rate}.png")
+        plt.clf()
+        np.save(f"data/p{p}-fail{limit_fail}-recov{recovery_rate}")
 
 
 ##### We could use two status, EPS and Fail or not. Send array with Statuses, and recive array. I will send you matrix A.
@@ -250,7 +267,18 @@ if __name__ == "__main__":
     ### EXAMPLE USAGE ###
     ## Of real data is set as true, n = EPS.shape[0]
     # Creating a network
-    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10)
-    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10)
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.1)
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.2)
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.4)
+
+    simulate_failures(1000, LOSS_IF_INFECTED, 0.1, True, 10, 0.1)
+    simulate_failures(1000, LOSS_IF_INFECTED, 0.4, True, 10, 0.4)
+    simulate_failures(1000, LOSS_IF_INFECTED, 0.6, True, 10, 0.4)
+    simulate_failures(1000, LOSS_IF_INFECTED, 0.8, True, 10, 0.4)
+
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.1, 0.1)
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.1, 0.4)
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.1, 0.6)
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.1, 1.0)
 
     # for loss_if_infected in np.arange(0.1, 0.9, 0.05):
