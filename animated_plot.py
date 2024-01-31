@@ -7,8 +7,8 @@ from network_modifier import create_shock, get_weak_nodes, threshold_test, propa
 
 
 ANIMATION = True # True = animation ove time, False = just plot initial state
-EDGE_LABELS = True # True fi want to see the edge labels
-NODE_SIZE = 20 # Node size
+EDGE_LABELS = False # True fi want to see the edge labels
+NODE_SIZE = 100 # Node size
 
 def update_node_status(iteration):
     """
@@ -36,11 +36,11 @@ def update_node_status(iteration):
 if __name__ == "__main__":
 
     ## Network creation
-    network = Network(n= 30, p=0.2)
+    network = Network(n= 50, m= 15)
     graph = network.graph
     network.set_all_statuses(2)
     network.set_all_edges()
-    create_shock(network, 3)
+    create_shock(network, 10)
 
     ## Network plot
     pos = nx.spring_layout(graph)

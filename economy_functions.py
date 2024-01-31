@@ -29,8 +29,7 @@ def ownership_matrix(graph,exponent):
 
     A = np.zeros((graph.number_of_nodes(),graph.number_of_nodes()))
     
-    for i,edge in enumerate(edges):
-        A[edge[0],edge[1]] = power_law_ownerships[i]
+    A[edges[:, 0], edges[:, 1]] = power_law_ownerships
     
     sum_owns = np.sum(A, axis=0)
     mask = sum_owns > 1
@@ -42,7 +41,7 @@ def ownership_matrix(graph,exponent):
 
 if __name__ == "__main__":
     ### Graph generation
-    n = 10_000
+    n = 10
     graph = nx.gnm_random_graph(n, n*0.3, seed = 100)
     graph = graph.to_directed()
     ## Mode
@@ -57,6 +56,7 @@ if __name__ == "__main__":
     
     plt.scatter(np.arange(len(values)), values, c='blue', marker='o', s = 1)
 
+    # Set custom labels on the x-axis
 
     # Add labels and a title
     plt.xlabel('edge [i, j]')
@@ -64,5 +64,5 @@ if __name__ == "__main__":
     plt.title('Sparse Matrix Values vs Positions')
     plt.show()
 
-        #print(edges)
+    #print(edges)
 

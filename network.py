@@ -251,5 +251,6 @@ if __name__ == "__main__":
     ## Of real data is set as true, n = EPS.shape[0]
     # Creating a network
     simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10)
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10)
 
     # for loss_if_infected in np.arange(0.1, 0.9, 0.05):
