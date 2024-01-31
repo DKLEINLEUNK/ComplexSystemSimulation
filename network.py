@@ -8,29 +8,40 @@ Running this module as a script will generate an example network.
 import networkx as nx
 import numpy as np
 import pandas as pd
-from network_modifier import create_shock, get_weak_nodes, threshold_test, propagate_shock, degrade, fail, save_state, load_state
+import matplotlib.pyplot as plt
+
+from network_modifier import (
+    create_shock,
+    get_weak_nodes,
+    threshold_test,
+    propagate_shock,
+    degrade,
+    fail,
+    save_state,
+    load_state,
+)
 from economy_functions import ownership_matrix
+from tqdm import tqdm, trange
 
 
-
-LIMIT_FAIL = 0.8  # Company fails if 30% of its EPS drops
-LOSS_IF_INFECTED = 0.6
+LIMIT_FAIL = 0.2  # Company fails if 30% of its EPS drops
+LOSS_IF_INFECTED = 0.1
 USE_REAL_DATA = True
-POWER_LAW_OWNS = 0.2 ## Need to improve with real data, or maybe we can research it's effect
+POWER_LAW_OWNS = (
+    0.2  ## Need to improve with real data, or maybe we can research it's effect
+)
 
 if USE_REAL_DATA == True:
-
     file_path = "companies_data.csv"
-    data = pd.read_csv(file_path, delimiter=';', decimal=',')
+    data = pd.read_csv(file_path, delimiter=";", decimal=",")
 
     EPS = np.array(data["EPS(rial)"]).astype(float)
-    SECTOR_MPE = data['Group P/E'].unique().astype(float) 
+    SECTOR_MPE = data["Group P/E"].unique().astype(float)
 
 else:
     SECTOR_MPE = np.array(
-    [7, 9, 10, 12, 14, 15, 16, 17, 18, 19, 22, 31]
+        [7, 9, 10, 12, 14, 15, 16, 17, 18, 19, 22, 31]
     )  # Median MPE per sector
-
 
 
 class Network:
@@ -101,7 +112,7 @@ class Network:
         self.pi = self.mpe * self.eps
         self.pi_ini = self.pi
 
-        self.A = ownership_matrix(self.graph,POWER_LAW_OWNS)
+        self.A = ownership_matrix(self.graph, POWER_LAW_OWNS)
 
     def set_edge(self, edge):
         return None
@@ -184,27 +195,47 @@ class Network:
         return neighbors
 
 
+def simulate_failures(
+    simulation_size, loss_if_infected, limit_fail, show_hist=False, shock_size=10
+):
+    simulation_size = 1000
+    fraction_failure_results = np.zeros(simulation_size)
+
+    for j in trange(simulation_size):
+        network = Network(n=EPS.shape[0], p=0.2)
+        network.set_all_statuses(2)
+
+        network.set_all_edges()
+        create_shock(network, shock_size)
+        for i in range(10):
+            propagate_shock(network, loss_if_infected, limit_fail)
+            total_failures = len(
+                list(
+                    filter(
+                        lambda item: item[1] in {0, 1},
+                        network.get_all_statuses().items(),
+                    )
+                )
+            )
+            fraction_failure = total_failures / network.graph.number_of_nodes()
+            # print(f"Total fraction of failures: {fraction_failure}")
+            fraction_failure_results[j] = fraction_failure
+
+    print(f"Average failure rate: {fraction_failure_results.mean()}")
+
+    if show_hist:
+        plt.hist(fraction_failure_results)
+        plt.show()
+
+
 ##### We could use two status, EPS and Fail or not. Send array with Statuses, and recive array. I will send you matrix A.
 
 if __name__ == "__main__":
     ### EXAMPLE USAGE ###
     ## Of real data is set as true, n = EPS.shape[0]
     # Creating a network
-    network = Network(n=EPS.shape[0], p=0.2)
-    network.set_all_statuses(2)
+    simulate_failures(10000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10)
 
-    network.set_all_edges()
-    print("i")
-    create_shock(network, 10)
-    for i in range(10):
-        propagate_shock(network, LOSS_IF_INFECTED, LIMIT_FAIL)
-        total_failures = len(
-            list(
-                filter(
-                    lambda item: item[1] in {0, 1}, network.get_all_statuses().items()
-                )
-            )
-        )
-        print(
-            f"Total fraction of failures: {total_failures/network.graph.number_of_nodes()}"
-        )
+    # for loss_if_infected in np.arange(0.1, 0.9, 0.05):
+        
+

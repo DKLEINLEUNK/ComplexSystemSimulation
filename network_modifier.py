@@ -14,7 +14,7 @@ Guide:
 
 
 import numpy as np
-from economy_functions import ownership_matrix,custom_sort
+from economy_functions import ownership_matrix, custom_sort
 
 
 def create_shock(network, size):
@@ -59,9 +59,9 @@ def threshold_test(network, threshold):
         list(filter(lambda item: item[1] == 2, network.get_all_statuses().items()))
     )
     possible_weak_nodes = np.where(
-        ((network.pi_ini - network.pi) / (network.pi_ini)) < threshold
+        ((network.pi_ini - network.pi) / (network.pi_ini)) > threshold
     )[0]
-    
+
     new_weak_nodes = np.intersect1d(healthy_nodes, possible_weak_nodes)
     return new_weak_nodes
 
@@ -95,9 +95,10 @@ def propagate_shock(network, loss_if_infected, threshold):
         delta_eps = delta_eps @ network.A
         network.eps = network.eps - delta_eps
         network.pi = network.mpe * network.eps
+
         # network.mpe = np.average(network.eps / network.pi)  ## Compute new network mpe
         # print(network.mpe)
-        #print(f"i: {i}, EPS: {network.pi.sum()}")
+        # print(f"i: {i}, EPS: {network.pi.sum()}")
 
     ## Setting all new weak nodes to weak, status = 1
     new_weak_nodes = threshold_test(network, threshold)
@@ -105,7 +106,7 @@ def propagate_shock(network, loss_if_infected, threshold):
 
     ## Setting already weak nodes to failed, status = 0. Need to implement so eps and pi also change
     fail(network, weak_nodes)
-    #print(network.get_all_statuses())
+    # print(network.get_all_statuses())
 
     ## Setting new conditions as initial for next period
     network.eps_ini = network.eps
