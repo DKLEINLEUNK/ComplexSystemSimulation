@@ -39,11 +39,14 @@ def get_weak_nodes(network, loss_if_infected):
         list(filter(lambda item: item[1] == 1, network.get_all_statuses().items()))
     )
     loss_infected = np.zeros(network.graph.number_of_nodes())
+
     if weak_nodes.shape[0] == 0:
         return weak_nodes, loss_infected
+    
     else:
         weak_nodes = weak_nodes[:, 0].astype(int)
-        loss_infected[weak_nodes] = loss_if_infected
+        loss_infected[weak_nodes] = 1 - loss_if_infected
+    
     return weak_nodes, loss_infected
 
 
@@ -105,13 +108,46 @@ def propagate_shock(network, loss_if_infected, threshold):
     network.set_statuses(new_weak_nodes, np.ones(len(new_weak_nodes)))
 
     ## Setting already weak nodes to failed, status = 0. Need to implement so eps and pi also change
+    recovery_nodes = np.random.choice(weak_nodes, size=int(0.1 * len(weak_nodes)), replace=False)
+    weak_nodes = np.setdiff1d(weak_nodes, recovery_nodes)
+    improve(network, recovery_nodes, loss_if_infected)
     fail(network, weak_nodes)
+
     # print(network.get_all_statuses())
 
     ## Setting new conditions as initial for next period
     network.eps_ini = network.eps
     network.mpe_ini = network.mpe
     network.pi_ini = network.pi
+
+def improve(network, nodes, loss_if_infected):
+    """
+    Given a set fo nodes, it returns them to state two
+    """
+    network.set_statuses(nodes, np.full(len(nodes),2))
+    if len(nodes) > 0:
+        network.eps[nodes] = (
+            network.eps[nodes]/(1-loss_if_infected) ## If failed company, it improves an 85%
+        )
+
+def fail(network, nodes):
+    """
+    Description
+    -----------
+    Fails an array of nodes.
+
+    Parameters
+    ----------
+    `network` : Network
+            The network to fail.
+    `nodes` : NDArray
+            The array of nodes to fail.
+    """
+    network.set_statuses(nodes, np.zeros(len(nodes), dtype=int))
+    if len(nodes) > 0:
+        network.eps[nodes] = (
+            network.eps[nodes]*0
+        )  # If company fails, then EPS drops by 85%   
 
 
 def degrade(network, node=None, random=False):
@@ -137,24 +173,8 @@ def degrade(network, node=None, random=False):
     network.set_status(node, int(network.get_status(node) - 1))
 
 
-def fail(network, nodes):
-    """
-    Description
-    -----------
-    Fails an array of nodes.
 
-    Parameters
-    ----------
-    `network` : Network
-            The network to fail.
-    `nodes` : NDArray
-            The array of nodes to fail.
-    """
-    network.set_statuses(nodes, np.zeros(len(nodes), dtype=int))
-    if len(nodes) > 0:
-        network.eps[nodes] = (
-            network.eps[nodes] * 0.15
-        )  # If company fails, then EPS drops by 85%
+
 
 
 def save_state(network, verbose=False):

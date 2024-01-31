@@ -26,7 +26,7 @@ from tqdm import tqdm, trange
 
 LIMIT_FAIL = 0.2  # Company fails if 30% of its EPS drops
 LOSS_IF_INFECTED = 0.1
-USE_REAL_DATA = True
+USE_REAL_DATA = False
 POWER_LAW_OWNS = (
     0.2  ## Need to improve with real data, or maybe we can research it's effect
 )
@@ -198,11 +198,10 @@ class Network:
 def simulate_failures(
     simulation_size, loss_if_infected, limit_fail, show_hist=False, shock_size=10
 ):
-    simulation_size = 1000
-    fraction_failure_results = np.zeros(simulation_size)
 
+    fraction_failure_results = np.zeros(simulation_size)
     for j in trange(simulation_size):
-        network = Network(n=EPS.shape[0], p=0.2)
+        network = Network(n=1000, p=0.2)
         network.set_all_statuses(2)
 
         network.set_all_edges()
@@ -234,7 +233,7 @@ if __name__ == "__main__":
     ### EXAMPLE USAGE ###
     ## Of real data is set as true, n = EPS.shape[0]
     # Creating a network
-    simulate_failures(10000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10)
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10)
 
     # for loss_if_infected in np.arange(0.1, 0.9, 0.05):
         
