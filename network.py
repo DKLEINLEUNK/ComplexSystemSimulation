@@ -4,11 +4,12 @@ This module contains the Network class, which represents a network of nodes.
 Running this module as a script will generate an example network.
 """
 
-
+import multiprocessing
 import networkx as nx
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 from network_modifier import (
     create_shock,
@@ -24,12 +25,13 @@ from economy_functions import ownership_matrix
 from tqdm import tqdm, trange
 
 
-LIMIT_FAIL = 0.2  # Company fails if 30% of its EPS drops
-LOSS_IF_INFECTED = 0.1
-USE_REAL_DATA = True
+LIMIT_FAIL = 0.5  # Company fails if 30% of its EPS drops
+LOSS_IF_INFECTED = 0.4
+USE_REAL_DATA = False
 POWER_LAW_OWNS = (
     0.2  ## Need to improve with real data, or maybe we can research it's effect
 )
+NETWORK_SIZE = 100
 
 if USE_REAL_DATA == True:
     file_path = "companies_data.csv"
@@ -195,36 +197,50 @@ class Network:
         return neighbors
 
 
+def single_simulation(args):
+    loss_if_infected = args[0]
+    limit_fail = args[1]
+    shock_size = args[2]
+    network = Network(n=NETWORK_SIZE, p=0.2)
+    network.set_all_statuses(2)
+    network.set_all_edges()
+    create_shock(network, shock_size)
+    for i in range(10):
+        propagate_shock(network, loss_if_infected, limit_fail)
+        total_failures = len(
+            list(
+                filter(
+                    lambda item: item[1] in {0, 1},
+                    network.get_all_statuses().items(),
+                )
+            )
+        )
+        fraction_failure = total_failures / network.graph.number_of_nodes()
+        print(f"Total fraction of failures: {fraction_failure}")
+        return fraction_failure
+
+
 def simulate_failures(
     simulation_size, loss_if_infected, limit_fail, show_hist=False, shock_size=10
 ):
-    simulation_size = 1000
-    fraction_failure_results = np.zeros(simulation_size)
+    #  = np.zeros(simulation_size)
 
-    for j in trange(simulation_size):
-        network = Network(n=EPS.shape[0], p=0.2)
-        network.set_all_statuses(2)
+    pool = multiprocessing.Pool()
+    simulation_results = pool.map(
+        single_simulation,
+        [(loss_if_infected, limit_fail, shock_size) for i in range(simulation_size)],
+    )
+    pool.close()
 
-        network.set_all_edges()
-        create_shock(network, shock_size)
-        for i in range(10):
-            propagate_shock(network, loss_if_infected, limit_fail)
-            total_failures = len(
-                list(
-                    filter(
-                        lambda item: item[1] in {0, 1},
-                        network.get_all_statuses().items(),
-                    )
-                )
-            )
-            fraction_failure = total_failures / network.graph.number_of_nodes()
-            # print(f"Total fraction of failures: {fraction_failure}")
-            fraction_failure_results[j] = fraction_failure
-
+    fraction_failure_results = np.array(list(simulation_results))
     print(f"Average failure rate: {fraction_failure_results.mean()}")
 
     if show_hist:
-        plt.hist(fraction_failure_results)
+        # plt.hist(fraction_failure_results, histtype="step")
+        sns.kdeplot(fraction_failure_results)
+        # plt.xlim([0.1, 0.6])
+        plt.yscale("log")
+        # plt.xscale("log")
         plt.show()
 
 
@@ -234,8 +250,6 @@ if __name__ == "__main__":
     ### EXAMPLE USAGE ###
     ## Of real data is set as true, n = EPS.shape[0]
     # Creating a network
-    simulate_failures(10000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10)
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10)
 
     # for loss_if_infected in np.arange(0.1, 0.9, 0.05):
-        
-
