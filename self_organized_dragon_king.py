@@ -31,7 +31,7 @@ class Inoculation:
     Class to simulate the inoculation version of the self-organized dragon king model.
     '''
 
-    def __init__(self, n_steps, n_trials, n_nodes, n_edges=None, pr_edge=None, d_regular=None, BA=False, epsilon=0.2, complex_contagion=False, verbose=False, visualize=False, export_path=None):
+    def __init__(self, n_steps, n_nodes, n_edges=None, pr_edge=None, d_regular=None, BA=False, epsilon=0.2, complex_contagion=False, verbose=False, visualize=False, export_path=None):
         '''
         Description
         -----------
@@ -41,8 +41,6 @@ class Inoculation:
         ----------
         `n_steps` : int
             The number of steps in a trial.
-        `n_trials` : int
-            The number of trials.
         `n_nodes` : int
             The number of nodes in the network.
         `n_edges` : int
@@ -74,7 +72,6 @@ class Inoculation:
         # Initialize the parameters
         self.epsilon = epsilon
         self.n_steps = n_steps
-        self.n_trials = n_trials
         
         # Initialize the current step
         self.time = 0
@@ -100,21 +97,16 @@ class Inoculation:
         -----------
         Runs the simulation.
         '''
-        # Loop through trials
-        for self._itrial in np.arange(1, self.n_trials + 1):
             
-            # Loop through the number of steps
-            for self._istep in np.arange(1, self.n_steps + 1):
-                
-                if not self.verbose:
-                    # If verbose is False (default), display a progress bar
-                    print(f"Starting trial {self._itrial} of {self.n_trials}  |  Step {self._istep} of {self.n_steps}               ", end='\r')
-                
-                # Execute a single step
-                self.step()
-
-            # # Re-initialize the network
-            # self.network = Network(self.n_nodes, self.n_edges, self.pr_edge)
+        # Loop through the number of steps
+        while self.time < self.n_steps:
+            
+            if not self.verbose:
+                # If verbose is False (default), display a progress bar
+                print(f"t = {self.time} of {self.n_steps}              ", end='\r')
+            
+            # Execute a single step
+            self.step()
 
         print('\nSimulation completed.')
         
@@ -150,11 +142,16 @@ class Inoculation:
             # Reinforce some of the failed nodes with status 1 given epsilon
             reinforce(self.network, failed_nodes, self.epsilon)
 
+            self.time += 1
             if self.visualize:
                 return self._visualize_network()
+            
 
         # Otherwise (i.e. no failure), end the step
         else:
+
+            self.time += 1
+            
             return self._visualize_network() if self.visualize else None
     
 
@@ -253,8 +250,9 @@ class Inoculation:
         #     raise ValueError("Length of all statuses does not match the specified number of nodes.")
 
         failures = status_values.count(0)
+        weaklings = status_values.count(1)
 
-        return self.cascade_counter, failures / len(status_values)
+        return self.cascade_counter, failures / len(status_values), weaklings / len(status_values)
 
 
     def _store_cascade(self):
@@ -264,8 +262,8 @@ class Inoculation:
         Stores a value in the cascade dict.
         '''
         self.cascade_counter += 1
-        t, x = self._get_cascade()
-        self.cascade_dict[t] = x
+        t, s, w = self._get_cascade()
+        self.cascade_dict[t] = s, w
 
 
     def _visualize_network(self):
@@ -300,8 +298,7 @@ class Inoculation:
         TODO switch to a pickle/file based approach to secure intermittent results.
         '''
         self.exporting = True
-        self.results = [[0]*self.n_steps]*self.n_trials
-
+        self.results = [0]*self.n_steps
 
     def _store_step_results(self):
         '''
@@ -309,8 +306,7 @@ class Inoculation:
         -----------
         Stores results of a step.
         '''
-        self.results[self._itrial - 1][self._istep - 1] = self.cascade_dict
-        print(f"Stored result for trial {self._itrial} and step {self._istep}.") if self.verbose else None
+        self.results[self.time] = self.cascade_dict
 
 
     def _export_results(self):
@@ -320,11 +316,9 @@ class Inoculation:
         Exports stored results to csv file.
         '''
         with open(f'{self.export_path}', 'w') as file:
-            for trial in np.arange(self.n_trials):
-                for step in np.arange(self.n_steps):
-                    # print(f"\nExporting result for trial {trial} and step {step}.")
-                    json.dump(self.results[trial][step], file)
-                    file.write('\n')
+            for step in np.arange(self.n_steps):
+                json.dump(self.results[step], file)
+                file.write('\n')
 
 
 def complex_contagion():
@@ -334,13 +328,13 @@ def complex_contagion():
 if __name__ == "__main__":
 
     complex_simulation = Inoculation(
-        n_steps=10_000,
-        n_trials=1,
-        n_nodes=1000,
+        n_steps=3,
+        n_nodes=10,
         d_regular = 3,
         epsilon = 0.1,
-        complex_contagion=True,
-        visualize=False
+        complex_contagion=False,
+        visualize=True,
+        export_path='exports/trial.txt'
     )
 
     complex_simulation.run()

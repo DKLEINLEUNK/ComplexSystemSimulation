@@ -3,79 +3,63 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 
+from self_organized_dragon_king import Inoculation
 
-def plot_results(n_nodes=10_000):
-    # Initialize the plot
+
+def run_simulation(n_timesteps=15_000, n_nodes=1000, export_path='exports/first_results.txt'):
+
+    sim = Inoculation(
+        n_steps=n_timesteps,
+        n_nodes=n_nodes,
+        d_regular = 3,
+        epsilon = 0.001,
+        complex_contagion=True,
+        visualize=False,
+        export_path=export_path
+    )
+
+    sim.run()
+
+
+def plot_results(path='exports/first_results.txt', time=True, size=False):
+    
     plt.figure()
-    plt.xlabel('s')
-    plt.ylabel('Pr(s)')
+    plt.xlabel('$t$')
+    plt.ylabel('$p$')
+    
     # plt.xscale('log')
-    plt.yscale('log')
-    plt.title('Cascade Size Distribution')
+    # plt.yscale('log')
+    
+    plt.title('Weak Nodes over Time') if time else plt.title('Failure Size Distribution')
+    
     plt.grid(True)
 
     # Read the data from the file
-    with open('exports/results.txt', 'r') as f:
+    with open(path, 'r') as f:
+        line_counter = 0
         for line in f:
+            line_counter += 1
             try:
                 data = json.loads(line)
-                # plt.plot(np.array(list(data.values()))* n_nodes, list(data.values()))
-                plt.plot(dict(data).keys(), data.values())
-                # print(dict(data).keys())
+                
+                time = line_counter
+                
+                failures = []
+                for measurements in list(data.values()):
+                    failures.append(measurements[0])
+                                
+                weaklings = data['0'][1]
+                
+                plt.plot(time, weaklings, 'o', color='blue', markersize=1)
+
             except:
-                # a zero entry is found
+                # a zero entry is found do nothing
                 pass
     
-    plt.show()
-            
-
-def plot_algorithm_efficiency():
-    # Initialize the plot
-    plt.figure()
-    plt.xlabel('number of nodes')
-    plt.ylabel('time per step')
-    plt.xscale('log')
-    # plt.yscale('log')
-    plt.title('Algorithm Efficiency')
-    plt.grid(True)
-
-    nodes = []
-    times = []
-
-    # Read the data from the file
-    filename = ['execution_times_3R.txt', 'execution_times_ER.txt', 'execution_times_BA.txt']
-    color = ['blue', 'red', 'green']
-    names = ['3R', 'ER', 'BA']
-    for i in range(3):
-        with open(filename[i], 'r') as f:
-            for line in f:
-                data = line.rstrip('\n').split(', ')
-                nodes.append(int(data[0]))
-                times.append(float(data[2]))
-            
-        plt.plot(nodes, times, color=color[i], marker='x', label=names[i])
-        nodes = []
-        times = []
-
-    plt.legend()    
-    plt.show()
-
-# plot_algorithm_efficiency()
-
-
-def plot_failure_size_distribution(S, Pr_S):
-    # Initialize the plot
-    plt.figure()
-    plt.xlabel('s')
-    plt.ylabel('Pr(s)')
-    plt.xscale('log')
-    plt.yscale('log')
-
-    plt.plot(S, Pr_S, marker='x')
     plt.show()
 
 
 if __name__ == '__main__':
 
-    N = np.linspace(0, 100_000, 100)
-    
+    run_simulation(export_path='exports/CC_first_run.txt')
+    # plot_results()
