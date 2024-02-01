@@ -49,6 +49,19 @@ def get_weak_nodes(network, loss_if_infected):
     
     return weak_nodes, loss_infected
 
+def get_failed_nodes(network):
+    """
+    Given a network, it check if there are any new infected nodes (node = 1)
+    Return the weak_nodes array and loss_infected for multiplication in algorithm
+    """
+
+    failed_nodes = np.array(
+        list(filter(lambda item: item[1] == 0, network.get_all_statuses().items()))
+    )
+    failed_nodes = failed_nodes[:, 0].astype(int)
+    
+    return failed_nodes
+
 
 def threshold_test(network, threshold):
     """
@@ -103,16 +116,22 @@ def propagate_shock(network, loss_if_infected, threshold, recovery_rate = 0.1):
         # print(network.mpe)
         # print(f"i: {i}, EPS: {network.pi.sum()}")
 
+
+    ## Setting olds weak nodes to weak, status = 0
+    fail(network,weak_nodes)
+    failed_nodes = get_failed_nodes(network)
+
     ## Setting all new weak nodes to weak, status = 1
     new_weak_nodes = threshold_test(network, threshold)
     network.set_statuses(new_weak_nodes, np.ones(len(new_weak_nodes)))
+    
+    #Recovery of already failed nodes
+    
+    recovery_nodes = np.random.choice(failed_nodes, size=int(recovery_rate * len(failed_nodes)), replace=False)
+    improve(network, recovery_nodes)
+    
 
-    ## Setting already weak nodes to failed, status = 0. Need to implement so eps and pi also change
-    recovery_nodes = np.random.choice(weak_nodes, size=int(recovery_rate * len(weak_nodes)), replace=False)
-    weak_nodes = np.setdiff1d(weak_nodes, recovery_nodes)
-    improve(network, recovery_nodes, loss_if_infected)
-    fail(network, weak_nodes)
-
+    print(len(failed_nodes)/network.graph.number_of_nodes())
     # print(network.get_all_statuses())
 
     ## Setting new conditions as initial for next period
@@ -120,15 +139,15 @@ def propagate_shock(network, loss_if_infected, threshold, recovery_rate = 0.1):
     network.mpe_ini = network.mpe
     network.pi_ini = network.pi
 
-def improve(network, nodes, loss_if_infected):
+
+def improve(network, nodes):
     """
     Given a set fo nodes, it returns them to state two
     """
     network.set_statuses(nodes, np.full(len(nodes),2))
     if len(nodes) > 0:
-        network.eps[nodes] = (
-            network.eps[nodes]/(1-loss_if_infected) ## If failed company, it improves an 85%
-        )
+        network.eps[nodes] = network.eps_ini_o[nodes]## If failed company returns, his eps returns to the original eps
+    
 
 def fail(network, nodes):
     """
@@ -148,7 +167,6 @@ def fail(network, nodes):
         network.eps[nodes] = (
             network.eps[nodes]*0
         )  # If company fails, then EPS drops by 85%   
-
 
 def degrade(network, node=None, random=False):
     """
@@ -171,10 +189,6 @@ def degrade(network, node=None, random=False):
     if random:
         node = np.random.choice(network.graph.nodes)
     network.set_status(node, int(network.get_status(node) - 1))
-
-
-
-
 
 
 def save_state(network, verbose=False):

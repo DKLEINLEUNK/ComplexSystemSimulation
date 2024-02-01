@@ -1,1 +1,27 @@
-s
+import bct
+import networkx as nx
+import matplotlib.pyplot as plt
+
+# Function to create a core-periphery network
+def create_core_periphery_network(core_size, periphery_size, core_edge_prob, periphery_edge_prob):
+    core_periphery_network = bct.community_structure.core_periphery(n=core_size + periphery_size,
+                                                                         kcore=core_size,
+                                                                         edge_in_prob=core_edge_prob,
+                                                                         edge_out_prob=periphery_edge_prob)
+
+    G = nx.Graph(core_periphery_network[0])
+    return G
+
+# Parameters
+core_size = 10
+periphery_size = 20
+core_edge_prob = 0.8
+periphery_edge_prob = 0.2
+
+# Create a core-periphery network
+core_periphery_network = create_core_periphery_network(core_size, periphery_size, core_edge_prob, periphery_edge_prob)
+
+# Draw the network
+pos = nx.spring_layout(core_periphery_network)
+nx.draw(core_periphery_network, pos, with_labels=True, font_weight='bold', node_size=200)
+plt.show()

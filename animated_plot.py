@@ -14,11 +14,20 @@ from network_modifier import (
     load_state,
 )
 
-
+## Animation properties
 ANIMATION = True  # True = animation ove time, False = just plot initial state
 EDGE_LABELS = False  # True fi want to see the edge labels
-NODE_SIZE = 100  # Node size
+NODE_SIZE = 10  # Node size
 
+## Netwrok properties
+
+THRESHOLDS = 0.2  # Company fails if 20% of its EPS drops
+LOSS_IF_INFECTED = 0.85
+USE_REAL_DATA = False
+POWER_LAW_OWNS = (
+    0.55  ## Need to improve with real data, or maybe we can research it's effect
+)
+NETWORK_SIZE = 100
 
 def update_node_status(iteration):
     """
@@ -30,7 +39,7 @@ def update_node_status(iteration):
     global color_mapping
     nodes.remove()
 
-    propagate_shock(network, 0.6, 0.8)
+    propagate_shock(network,LOSS_IF_INFECTED , THRESHOLDS, recovery_rate = 0.6)
 
     node_statuses = nx.get_node_attributes(graph, "status")
 
@@ -45,11 +54,11 @@ def update_node_status(iteration):
 
 if __name__ == "__main__":
     ## Network creation
-    network = Network(n=50, p=0.3)
+    network = Network(n = NETWORK_SIZE, p = 0.1)
     graph = network.graph
     network.set_all_statuses(2)
     network.set_all_edges()
-    create_shock(network, 10)
+    create_shock(network, int(0.1*NETWORK_SIZE))
 
     ## Network plot
     pos = nx.spring_layout(graph)
@@ -80,7 +89,7 @@ if __name__ == "__main__":
 
     if ANIMATION == True:
         animation = FuncAnimation(
-            fig, update_node_status, frames=10, interval=1000, blit=False
+            fig, update_node_status, frames=8, interval=2000, blit=False
         )
 
     plt.show()

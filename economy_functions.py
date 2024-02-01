@@ -38,21 +38,22 @@ def ownership_matrix(graph,exponent):
 
 
 
-
 if __name__ == "__main__":
     ### Graph generation
-    n = 10
+    n = 1000
     graph = nx.gnm_random_graph(n, n*0.3, seed = 100)
     graph = graph.to_directed()
     ## Mode
 
-    A = ownership_matrix(graph, 0.2)
+    A = ownership_matrix(graph, 0.55)
 
     edges = np.array(graph.edges())
     weights = np.bincount(edges[:,0])
     sort_indices = np.array([custom_sort(edge, weights) for edge in edges])
     edges = edges[np.argsort(sort_indices)]
     values = np.array([A[i, j] for i, j in edges])
+    print(len(values[values>0.5]))
+    print(len(values[values<0.5]))
     
     plt.scatter(np.arange(len(values)), values, c='blue', marker='o', s = 1)
 
@@ -65,4 +66,5 @@ if __name__ == "__main__":
     plt.show()
 
     #print(edges)
+
 

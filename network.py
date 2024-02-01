@@ -10,6 +10,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import powerlaw as powerlaw
+
 
 from network_modifier import (
     create_shock,
@@ -29,7 +31,7 @@ LIMIT_FAIL = 0.2  # Company fails if 20% of its EPS drops
 LOSS_IF_INFECTED = 0.85
 USE_REAL_DATA = False
 POWER_LAW_OWNS = (
-    0.2  ## Need to improve with real data, or maybe we can research it's effect
+    0.55
 )
 NETWORK_SIZE = 100
 
@@ -84,14 +86,12 @@ class Network:
         Probability of an edge
         """
         if m is not None:
-            self.graph = nx.gnm_random_graph(n, m, seed=100)
+            self.graph = nx.barabasi_albert_graph(n,m)
         elif p is not None:
             self.graph = nx.erdos_renyi_graph(
                 n,
                 p,
-                seed=100,
             )
-
         else:
             raise ValueError("Either m or p must be provided.")
 
@@ -105,8 +105,9 @@ class Network:
         else:
             self.eps = _lambda = _lambda or 1.5
             self.eps = np.random.exponential(_lambda, n)
+        
         self.eps_ini = self.eps
-
+        self.eps_ini_o = self.eps
         self.sector = np.random.randint(0, 12, n)
         self.mpe = SECTOR_MPE[self.sector]  # Now uses the PE of a sector
         self.mpe_ini = self.mpe
@@ -231,6 +232,7 @@ def simulate_failures(
     shock_size=10,
     p=0.1,
     recovery_rate=0.1,
+    change = "not_specified"
 ):
     """Generate the entire simulation of the network simulation"""
     #  = np.zeros(simulation_size)
@@ -252,16 +254,19 @@ def simulate_failures(
         plt.title(
             f"ER $p={p}$, $f$ = {limit_fail}, $r$ = {recovery_rate}, $l$ = {loss_if_infected}"
         )
+
         sns.kdeplot(fraction_failure_results, bw_adjust=0.5, cut=0)
         plt.yscale("log")
+        plt.xscale('log')
         plt.xlabel("$s$")
         plt.ylabel("$P(s)$")
-        plt.savefig(
-            f"figures/p{p}-fail{limit_fail}-recov{recovery_rate}-loss{loss_if_infected}.png"
-        )
+        #plt.savefig(
+            #f"figures/{change}/p{p}-fail{limit_fail}-recov{recovery_rate}-loss{loss_if_infected}.png"
+        #)
         plt.clf()
+    
         np.save(
-            f"data/p{p}-fail{limit_fail}-recov{recovery_rate}-loss{loss_if_infected}",
+            f"data/{change}2/p{p}-fail{limit_fail}-recov{recovery_rate}-loss{loss_if_infected}",
             fraction_failure_results,
         )
 
@@ -270,25 +275,73 @@ def simulate_failures(
 
 if __name__ == "__main__":
     # Change Network Structure
-    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.1)
-    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.2)
-    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.4)
-
+    """
+    network = Network(100, m = 90)
+    network.set_all_statuses(2)
+    network.set_all_edges()
+    create_shock(network, int(100*0.3))
+    
+    for i in range(10):
+        propagate_shock(network, LOSS_IF_INFECTED, LIMIT_FAIL)
+    """
+    shock = 0.1
+    """
+    ## Change Network structure
+    
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL,  store_hist= True, shock_size = int(shock*NETWORK_SIZE), p = 0.1, change = "network")
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, store_hist=True, shock_size = int(shock*NETWORK_SIZE),  p = 0.2,change = "network")
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, store_hist= True, shock_size = int(shock*NETWORK_SIZE), p = 0.4,change = "network")
+    
     # Change limit of failure
-    simulate_failures(1000, LOSS_IF_INFECTED, 0.1, True, 10, 0.1)
-    simulate_failures(1000, LOSS_IF_INFECTED, 0.4, True, 10, 0.4)
-    simulate_failures(1000, LOSS_IF_INFECTED, 0.6, True, 10, 0.4)
-    simulate_failures(1000, LOSS_IF_INFECTED, 0.8, True, 10, 0.4)
+    
+    simulate_failures(1000, LOSS_IF_INFECTED, limit_fail = 0.1, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.1, change = "failure")
+    simulate_failures(1000, LOSS_IF_INFECTED, limit_fail = 0.4, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.1, change = "failure")
+    simulate_failures(1000, LOSS_IF_INFECTED, limit_fail = 0.6, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.1, change = "failure")
+    simulate_failures(1000, LOSS_IF_INFECTED, limit_fail = 0.8, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p =0.1, change = "failure")
+    
+    simulate_failures(1000, LOSS_IF_INFECTED, limit_fail = 0.1, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.2, change = "failure")
+    simulate_failures(1000, LOSS_IF_INFECTED, limit_fail = 0.4, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.2, change = "failure")
+    simulate_failures(1000, LOSS_IF_INFECTED, limit_fail = 0.6, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.2, change = "failure")
+    simulate_failures(1000, LOSS_IF_INFECTED, limit_fail = 0.8, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p =0.2, change = "failure")
+
+    simulate_failures(1000, LOSS_IF_INFECTED, limit_fail = 0.1, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.4, change = "failure")
+    simulate_failures(1000, LOSS_IF_INFECTED, limit_fail = 0.4, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.4, change = "failure")
+    simulate_failures(1000, LOSS_IF_INFECTED, limit_fail = 0.6, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.4, change = "failure")
+    simulate_failures(1000, LOSS_IF_INFECTED, limit_fail = 0.8, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.4, change = "failure")
 
     # Change recovery rates
-    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.1, 0.1)
-    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.1, 0.4)
-    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.1, 0.6)
-    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.1, 1.0)
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.1, recovery_rate= 0.1, change = "recovery")
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.1, recovery_rate= 0.4, change = "recovery")
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.1, recovery_rate= 0.6, change = "recovery")
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.1, recovery_rate= 1.0, change = "recovery")
 
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.2, recovery_rate= 0.1, change = "recovery")
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.2, recovery_rate= 0.4, change = "recovery")
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.2, recovery_rate= 0.6, change = "recovery")
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.2, recovery_rate= 1.0, change = "recovery")
+
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.4, recovery_rate= 0.1, change = "recovery")
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.4, recovery_rate= 0.4, change = "recovery")
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.4, recovery_rate= 0.6, change = "recovery")
+    simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, store_hist=True, shock_size = int(shock*NETWORK_SIZE), p = 0.4, recovery_rate= 1.0, change = "recovery")
+    """
     # Change drop in EPS
-    simulate_failures(1000, 0.3, LIMIT_FAIL, True, 10, 0.1)
-    simulate_failures(1000, 0.6, LIMIT_FAIL, True, 10, 0.1)
-    simulate_failures(1000, 0.7, LIMIT_FAIL, True, 10, 0.1)
-    simulate_failures(1000, 0.85, LIMIT_FAIL, True, 10, 0.1)
-    simulate_failures(1000, 0.95, LIMIT_FAIL, True, 10, 0.1)
+    simulate_failures(1000, 0.3, LIMIT_FAIL, True, shock_size = int(shock*NETWORK_SIZE),p =  0.1, change = "EPS")
+    simulate_failures(1000, 0.6, LIMIT_FAIL, True, shock_size = int(shock*NETWORK_SIZE), p = 0.1, change = "EPS")
+    simulate_failures(1000, 0.7, LIMIT_FAIL, True, shock_size = int(shock*NETWORK_SIZE), p = 0.1, change = "EPS")
+    simulate_failures(1000, 0.85, LIMIT_FAIL, True, shock_size = int(shock*NETWORK_SIZE), p = 0.1, change = "EPS")
+    simulate_failures(1000, 0.95, LIMIT_FAIL, True, shock_size = int(shock*NETWORK_SIZE), p = 0.1,change = "EPS")
+    """
+    simulate_failures(1000, 0.3, LIMIT_FAIL, True, shock_size = int(shock*NETWORK_SIZE),p =  0.2, change = "EPS")
+    simulate_failures(1000, 0.6, LIMIT_FAIL, True, shock_size = int(shock*NETWORK_SIZE), p = 0.2, change = "EPS")
+    simulate_failures(1000, 0.7, LIMIT_FAIL, True, shock_size = int(shock*NETWORK_SIZE), p = 0.2, change = "EPS")
+    simulate_failures(1000, 0.85, LIMIT_FAIL, True, shock_size = int(shock*NETWORK_SIZE), p = 0.2, change = "EPS")
+    simulate_failures(1000, 0.95, LIMIT_FAIL, True, shock_size = int(shock*NETWORK_SIZE), p = 0.2, change = "EPS")
+
+    simulate_failures(1000, 0.3, LIMIT_FAIL, True, shock_size = int(shock*NETWORK_SIZE),p =  0.4, change = "EPS")
+    simulate_failures(1000, 0.6, LIMIT_FAIL, True, shock_size = int(shock*NETWORK_SIZE), p = 0.4, change = "EPS")
+    simulate_failures(1000, 0.7, LIMIT_FAIL, True, shock_size = int(shock*NETWORK_SIZE), p = 0.4, change = "EPS")
+    simulate_failures(1000, 0.85, LIMIT_FAIL, True, shock_size = int(shock*NETWORK_SIZE), p = 0.4, change = "EPS")
+    simulate_failures(1000, 0.95, LIMIT_FAIL, True, shock_size = int(shock*NETWORK_SIZE), p = 0.4, change = "EPS" )
+
+    """ 
