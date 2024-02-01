@@ -250,35 +250,45 @@ def simulate_failures(
 
     if store_hist:
         plt.title(
-            f"Erdos-Renyi $p={p}$, failure limit = {limit_fail}, recovery rate = {recovery_rate}"
+            f"ER $p={p}$, $f$ = {limit_fail}, $r$ = {recovery_rate}, $l$ = {loss_if_infected}"
         )
-        sns.kdeplot(fraction_failure_results, bw_method=0.2)
+        sns.kdeplot(fraction_failure_results, bw_adjust=0.5, cut=0)
         plt.yscale("log")
         plt.xlabel("$s$")
         plt.ylabel("$P(s)$")
-        plt.savefig(f"figures/p{p}-fail{limit_fail}-recov{recovery_rate}.png")
+        plt.savefig(
+            f"figures/p{p}-fail{limit_fail}-recov{recovery_rate}-loss{loss_if_infected}.png"
+        )
         plt.clf()
-        np.save(f"data/p{p}-fail{limit_fail}-recov{recovery_rate}")
+        np.save(
+            f"data/p{p}-fail{limit_fail}-recov{recovery_rate}-loss{loss_if_infected}",
+            fraction_failure_results,
+        )
 
 
 ##### We could use two status, EPS and Fail or not. Send array with Statuses, and recive array. I will send you matrix A.
 
 if __name__ == "__main__":
-    ### EXAMPLE USAGE ###
-    ## Of real data is set as true, n = EPS.shape[0]
-    # Creating a network
+    # Change Network Structure
     simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.1)
     simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.2)
     simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.4)
 
+    # Change limit of failure
     simulate_failures(1000, LOSS_IF_INFECTED, 0.1, True, 10, 0.1)
     simulate_failures(1000, LOSS_IF_INFECTED, 0.4, True, 10, 0.4)
     simulate_failures(1000, LOSS_IF_INFECTED, 0.6, True, 10, 0.4)
     simulate_failures(1000, LOSS_IF_INFECTED, 0.8, True, 10, 0.4)
 
+    # Change recovery rates
     simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.1, 0.1)
     simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.1, 0.4)
     simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.1, 0.6)
     simulate_failures(1000, LOSS_IF_INFECTED, LIMIT_FAIL, True, 10, 0.1, 1.0)
 
-    # for loss_if_infected in np.arange(0.1, 0.9, 0.05):
+    # Change drop in EPS
+    simulate_failures(1000, 0.3, LIMIT_FAIL, True, 10, 0.1)
+    simulate_failures(1000, 0.6, LIMIT_FAIL, True, 10, 0.1)
+    simulate_failures(1000, 0.7, LIMIT_FAIL, True, 10, 0.1)
+    simulate_failures(1000, 0.85, LIMIT_FAIL, True, 10, 0.1)
+    simulate_failures(1000, 0.95, LIMIT_FAIL, True, 10, 0.1)
