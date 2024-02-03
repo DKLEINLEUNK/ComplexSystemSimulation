@@ -17,11 +17,11 @@ from network_modifier import (
 ## Animation properties
 ANIMATION = True  # True = animation ove time, False = just plot initial state
 EDGE_LABELS = False  # True fi want to see the edge labels
-NODE_SIZE = 10  # Node size
+NODE_SIZE = 20  # Node size
 
 ## Netwrok properties
 
-THRESHOLDS = 0.2  # Company fails if 20% of its EPS drops
+THRESHOLDS = 0.3  # Company fails if 20% of its EPS drops
 LOSS_IF_INFECTED = 0.85
 USE_REAL_DATA = False
 POWER_LAW_OWNS = (
@@ -49,7 +49,6 @@ def update_node_status(iteration):
         graph, pos=pos, node_color=node_colors, node_size=NODE_SIZE
     )
 
-    ax.set_title(f"Cycle: {iteration}")
 
 
 if __name__ == "__main__":
@@ -68,6 +67,7 @@ if __name__ == "__main__":
     color_mapping = {0: "red", 1: "yellow", 2: "green"}
 
     ## PLots
+    ax.set_title(f"Erdos Renyi network with p = 0.1, Threshold = 20%, EPS = 85% and Recovery = 10% ")
     node_statuses = nx.get_node_attributes(graph, "status")
     node_colors = [color_mapping[node_statuses[node]] for node in graph.nodes]
     nodes = nx.draw_networkx_nodes(
