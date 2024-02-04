@@ -15,23 +15,24 @@ from network_modifier import (
 )
 
 ## Animation properties
-ANIMATION = True  # True = animation ove time, False = just plot initial state
-EDGE_LABELS = False  # True fi want to see the edge labels
-NODE_SIZE = 20  # Node size
 
-## Netwrok properties
+ANIMATION = True 
+EDGE_LABELS = False  
+NODE_SIZE = 20  
 
-THRESHOLDS = 0.3  # Company fails if 20% of its EPS drops
+## Network properties
+
+THRESHOLDS = 0.3  #
 LOSS_IF_INFECTED = 0.85
 USE_REAL_DATA = False
 POWER_LAW_OWNS = (
-    0.55  ## Need to improve with real data, or maybe we can research it's effect
+    0.55  
 )
 NETWORK_SIZE = 100
 
 def update_node_status(iteration):
     """
-    For each iterations, it propagates a shock and plots teh results
+    For each iterations, it propagates a shock and plots the results
     """
 
     global graph

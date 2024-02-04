@@ -32,7 +32,7 @@ def create_shock(network, size):
 def get_weak_nodes(network, loss_if_infected):
     """
     Given a network, it check if there are any new infected nodes (node = 1)
-    Return the weak_nodes array and loss_infected for multiplication in algorithm
+    Return the weak_nodes array and loss_infected for multiplication in algorithm and loss reduction
     """
 
     weak_nodes = np.array(
@@ -96,25 +96,19 @@ def propagate_shock(network, loss_if_infected, threshold, recovery_rate = 0.1):
 
     weak_nodes, loss_infected = get_weak_nodes(
         network, loss_if_infected
-    )  ##Nodes that will have a 85% decrease in next quarter
+    )  
 
-    # Calculate change in EPS here, dependent on A
     delta_eps = network.eps * loss_infected
     network.eps -= delta_eps
 
     network.pi = network.mpe * network.eps
 
-    # network.mpe = np.average(network.eps / network.pi)
 
     # For 90 days
     for i in range(90):
         delta_eps = delta_eps @ network.A
         network.eps = network.eps - delta_eps
         network.pi = network.mpe * network.eps
-
-        # network.mpe = np.average(network.eps / network.pi)  ## Compute new network mpe
-        # print(network.mpe)
-        # print(f"i: {i}, EPS: {network.pi.sum()}")
 
 
     ## Setting olds weak nodes to weak, status = 0
@@ -126,13 +120,11 @@ def propagate_shock(network, loss_if_infected, threshold, recovery_rate = 0.1):
     network.set_statuses(new_weak_nodes, np.ones(len(new_weak_nodes)))
     
     #Recovery of already failed nodes
-    
     recovery_nodes = np.random.choice(failed_nodes, size=int(recovery_rate * len(failed_nodes)), replace=False)
     improve(network, recovery_nodes)
     
 
     print(len(failed_nodes)/network.graph.number_of_nodes())
-    # print(network.get_all_statuses())
 
     ## Setting new conditions as initial for next period
     network.eps_ini = network.eps
@@ -146,7 +138,7 @@ def improve(network, nodes):
     """
     network.set_statuses(nodes, np.full(len(nodes),2))
     if len(nodes) > 0:
-        network.eps[nodes] = network.eps_ini_o[nodes]## If failed company returns, his eps returns to the original eps
+        network.eps[nodes] = network.eps_ini_o[nodes]
     
 
 def fail(network, nodes):
@@ -166,7 +158,7 @@ def fail(network, nodes):
     if len(nodes) > 0:
         network.eps[nodes] = (
             network.eps[nodes]*0
-        )  # If company fails, then EPS drops by 85%   
+        )
 
 def degrade(network, node=None, random=False):
     """
@@ -237,35 +229,3 @@ def reinforce(network, nodes, epsilon):
             network.set_status(node, 2)
         else:
             network.set_status(node, 1)
-
-
-if __name__ == "__main__":
-    ### EXAMPLE USAGE ###
-
-    # Creating a network
-    network = Network(n=100_001, m=300_000)
-    nodes = np.array([1, 10, 100, 1_000, 10_000, 100_000])  # nodes to check status of
-    print(
-        f"Status of nodes 1, 10, 100, 1_000, 10_000, 100_000: {network.get_statuses(nodes)}"
-    )
-
-    # Degrading a specific node (if random use node=None, random=True)
-    degrade(network, node=10_000, random=False)
-    print(f"Status of nodes after degradation: {network.get_statuses(nodes)}")
-
-    # Failing an array of nodes (useful for cascading failures)
-    fail(network, np.array([1, 10, 100]))
-    print(f"Status of nodes after failure: {network.get_statuses(nodes)}")
-
-    # Saving the current state
-    previous_state = save_state(network, verbose=True)
-
-    # Setting the statuses of all nodes to 1
-    network.set_all_statuses(1)
-    print(f"Status of nodes after setting all to 1: {network.get_statuses(nodes)}")
-
-    # Loading the previous state
-    load_state(network, previous_state)
-    print(
-        f"Status of nodes after loading previous state: {network.get_statuses(nodes)}"
-    )

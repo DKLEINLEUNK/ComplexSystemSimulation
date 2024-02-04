@@ -1,6 +1,0 @@
-tqdm
-numpy
-pandas
-matplotlib
-networkx
-seaborn

@@ -1,5 +1,5 @@
 """
-This file contains functions which are not called in the terminal, support functions
+This file contains functions which do not use network as input
 """
 
 import numpy as  np
@@ -16,9 +16,9 @@ def custom_sort(edge,weights):
 
 
 def ownership_matrix(graph,exponent):
-    '''
+    """
     Create a matrix of ownerships and sets the edges values following a power law distribution
-    '''
+    """
     edges = np.array(graph.edges())
     weights = np.bincount(edges[:,0])
     power_law_ownerships = np.random.power(exponent, graph.number_of_edges())
@@ -39,11 +39,10 @@ def ownership_matrix(graph,exponent):
 
 
 if __name__ == "__main__":
-    ### Graph generation
+    ### Graph generation of Matrix A ownerships
     n = 1000
     graph = nx.gnm_random_graph(n, n*0.3, seed = 100)
     graph = graph.to_directed()
-    ## Mode
 
     A = ownership_matrix(graph, 0.55)
 
@@ -52,19 +51,13 @@ if __name__ == "__main__":
     sort_indices = np.array([custom_sort(edge, weights) for edge in edges])
     edges = edges[np.argsort(sort_indices)]
     values = np.array([A[i, j] for i, j in edges])
-    print(len(values[values>0.5]))
-    print(len(values[values<0.5]))
+    fraction = np.round(len(values[values>0.5])/len(values[values<0.5]),2)
     
     plt.scatter(np.arange(len(values)), values, c='blue', marker='o', s = 1)
 
-    # Set custom labels on the x-axis
-
-    # Add labels and a title
-    plt.xlabel('edge [i, j]')
     plt.ylabel('Value')
-    plt.title('Sparse Matrix Values vs Positions')
+    plt.title(f'Sparse Matrix Ownerships distribution. {fraction*100}% of ownerships above 50% for the more connected companies')
     plt.show()
 
-    #print(edges)
 
 
