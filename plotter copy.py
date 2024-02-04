@@ -64,51 +64,70 @@ def plot_results(path='exports/first_results.txt', time=False, size=False, exclu
                     pass
 
     if time:
-        plt.figure(figsize=(6, 6))
-        plt.plot(times, weaklings, '--', color='green', label='e=0.01')
-        plt.ylim(.4, .8)
-        plt.xlabel('Time')
-        plt.ylabel('Weak Nodes')
-        plt.legend()
-        plt.grid(True)
+        plt.figure(figsize=(3, 3))
+
+        times = np.array(times) / 50_000
+
+        plt.plot(times, weaklings, '-', color='purple', label='e=0.01')
+        plt.ylim(0, 1)
+        plt.xlabel('$t$', fontsize=12)
+        plt.ylabel('p(t)', fontsize=12)
+        plt.tight_layout()
+        plt.show()
 
     if size:
-        fit = powerlaw.Fit(failures)
-        # plt.figure(figsize=(12, 6))
 
-        # PDF
-        plt.figure(figsize=(6, 6))
-        # plt.subplot(1, 2, 1)
+        failures = np.array(failures) * 5_000
 
-        # TODO only plot pdf for a range of the data
-        fit.power_law.plot_pdf(color='blue', linestyle='--', label=f'a={fit.power_law.alpha:.2f}')
+        xmin = 10
+        xmax = 200
+
+        fit = powerlaw.Fit(failures, discrete=True, xmin=xmin, xmax=xmax)
+
+        plt.figure(figsize=(3, 3))
+        plt.xscale('log')
+        plt.yscale('log')
+        alpha = fit.power_law.alpha
+        xmin = fit.xmin
+
+        # Generate x-values from xmin to the maximum value in your data or beyond, as needed
+        x = np.linspace(xmin, 500, 1000)
+
+        # Calculate the PDF of the power law using the formula: C*x^(-alpha)
+        # Where C is a normalization constant. For simplicity, we'll focus on the shape,
+        # so the exact value of C is not critical for visual representation.
+        pdf = (x ** (-alpha))
+
+        # Offset the PDF by a small factor to "lift" the line up
+        offset_factor = 1.2
+        offset_pdf = pdf * offset_factor
+
+        # fit.power_law.plot_pdf(color='purple', linestyle='--', label=f'a={fit.power_law.alpha:.2f}')
 
         bins, proportion = fit.pdf(original_data=True)
         midpoints = [(bins[i] + bins[i+1]) / 2 for i in range(len(bins) - 1)]
 
-        plt.plot(midpoints, proportion, 'x', color='orange', markersize=5, label='e=0.01')
-        plt.xlabel('Proportions')
-        plt.ylabel('PDF')
-        plt.legend()
-        plt.grid(True)
+        plt.plot(midpoints, proportion, 'v', color='yellow', markersize=7, label='e=0.01')
 
-        # # CDF
-        # plt.subplot(1, 2, 2)
-        # fit.power_law.plot_cdf(color='b', linestyle='--', label='Power law fit')
-        # fit.plot_cdf(color='r', label='Empirical Data')
-        # plt.xlabel('Proportions')
-        # plt.ylabel('CDF')
-        # plt.legend()
+        # Plot the adjusted fitted power law
+        plt.plot(x, offset_pdf, color='purple', linestyle='--', label=f'Adjusted a={alpha:.2f}')
 
+        x_text = np.max(x) * 0.5 - 100
+        y_text = np.max(offset_pdf) * 0.4
+
+        # Add text for alpha
+        plt.text(x_text, y_text, f'$\\alpha = {alpha:.2f}$', fontsize=12, verticalalignment='top')
+
+        plt.xlabel('$s$', fontsize=12)
+        plt.ylabel('$p(s)$', fontsize=12)
         plt.tight_layout()
         plt.show()
-    # plt.show()
 
 
 if __name__ == '__main__':
 
-    name = 'exports/IN_n_5e3_t_5e4_e_1e-2.txt'
-    run_simulation(n_nodes=5_000, n_timesteps=50_000, epsilon=0.001, CC=False, export_path=name)
+    name = 'exports/CC_n_5e3_t_5e4_e_1e-2.txt'
+    # run_simulation(n_nodes=5_000, n_timesteps=50_000, epsilon=0.001, CC=False, export_path=name)
 
     plot_results(path=name, time=True, size=False, exclude=0)
     plot_results(path=name, time=False, size=True, exclude=0)
