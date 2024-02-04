@@ -5,7 +5,7 @@ import numpy as np
 
 import powerlaw
 
-from main_self_organized_dragon_king import Inoculation
+from self_organized_dragon_king import Inoculation
 
 
 def run_simulation(n_timesteps=15_000, n_nodes=1000, epsilon=0.001, CC=True, export_path='exports/first_results.txt'):
@@ -127,8 +127,7 @@ def plot_results(path='exports/first_results.txt', time=False, size=False, exclu
 if __name__ == '__main__':
 
     name = 'exports/CC_n_5e3_t_5e4_e_1e-2.txt'
-    # run_simulation(n_nodes=5_000, n_timesteps=50_000, epsilon=0.001, CC=False, export_path=name)
+    run_simulation(n_nodes=5_000, n_timesteps=50_000, epsilon=0.001, CC=False, export_path=name)
 
     plot_results(path=name, time=True, size=False, exclude=0)
     plot_results(path=name, time=False, size=True, exclude=0)
-    # plot_results(path='exports/first_results.txt', time=False, size=True)
