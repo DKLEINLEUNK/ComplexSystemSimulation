@@ -21,8 +21,8 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import powerlaw
 
-from network import Network
-from network_modifier import degrade, fail, save_state, load_state, reinforce
+from main_network import Network
+from main_network_modifier import degrade, fail, save_state, load_state, reinforce
 
 
 class Inoculation:

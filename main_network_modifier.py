@@ -9,7 +9,7 @@ Running this module as a script shows some example use cases.
 
 import numpy as np
 
-from network import Network
+from main_network import Network
 
 
 def degrade(network:Network, node=None, random=False):
