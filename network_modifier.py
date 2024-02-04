@@ -93,6 +93,7 @@ def reinforce(network:Network, nodes, epsilon):
 	TODO add numpy enhancement to remove this additional loop (use an array of probabilities)
 	'''
 	for node in nodes:
+		# if network.get_status(node) == 1:  # to ensure strong nodes remain strong
 		if np.random.rand() < epsilon:
 			network.set_status(node, 2)
 		else:

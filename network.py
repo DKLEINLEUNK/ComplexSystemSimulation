@@ -47,14 +47,16 @@ class Network:
 		`d` : int
 			Number of dimensions for random regular graph
 		'''
+		
+		self.n = int(np.ceil(n / 2) * 2)
 		if m is not None:
-			self.graph = nx.gnm_random_graph(n, m)
+			self.graph = nx.gnm_random_graph(self.n, m)
 		elif p is not None:
-			self.graph = nx.erdos_renyi_graph(n, p)
+			self.graph = nx.erdos_renyi_graph(self.n, p)
 		elif d is not None:
-			self.graph = nx.random_regular_graph(d, n)
+			self.graph = nx.random_regular_graph(d, self.n)
 		elif BA:
-			self.graph = nx.barabasi_albert_graph(n, 3)
+			self.graph = nx.barabasi_albert_graph(self.n, 3)
 		else:
 			raise ValueError("Either m, p, d must be provided.")
 		
