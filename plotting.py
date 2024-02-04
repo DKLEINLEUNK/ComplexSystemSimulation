@@ -67,11 +67,12 @@ def multi_plot():
                 data = np.load(f"data\{VARIABLE_TO_PLOT}{FILE_NUMBER}\p{probs[j]}-fail{var[i]}-recov0.1-loss0.85.npy")
                 sns.kdeplot(data, bw_adjust=0.5, cut=0, ax = axs[j], marker='^', linestyle='', markersize=5, label = f"{VARIABLE_TO_PLOT} = {var[i]*100}%")
             specs(axs[j])
-
-    if SHOW_PLOT == True:
-        plt.show()
+    
     if SAVE_PLOTS == True:
         plt.savefig(f'figures\\{VARIABLE_TO_PLOT}\\dataset_{FILE_NUMBER}_multi_p.png')
+    if SHOW_PLOT == True:
+        plt.show()
+
        
 def single_plot():
     """
